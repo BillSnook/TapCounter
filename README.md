@@ -11,8 +11,8 @@ app that mirrors the same buttons.
   and a large, prominent count.
 - **Gestures on each button:**
   - **Tap** → increments the count.
-  - **Long press** → decrements the count.
-  - **Double tap** → zeroes the count out; double-tap again to restore the
+  - **Double tap** → decrements the count.
+  - **Triple tap** → zeroes the count out; triple-tap again to restore the
     value it had before it was zeroed (alternates each time).
 - **Apple Watch app** — shows the same buttons with the same gestures, kept
   in sync with the iPhone app over WatchConnectivity.
@@ -21,6 +21,7 @@ app that mirrors the same buttons.
 
 ```
 TapCounter/
+  README.md                You are here
   project.yml              XcodeGen spec — generates the .xcodeproj
   Shared/                  Code used by both the iOS and watchOS targets
     CounterButtonItem.swift    the counter model + increment/decrement/zero logic
@@ -83,10 +84,5 @@ picks up folder contents automatically, so you generally don't need to touch
 - **App icon**: a placeholder icon is included (`icon-1024.png` in both
   `Assets.xcassets`) so the project builds cleanly; swap it for real artwork
   before shipping.
-- **Gesture tuning**: tap/long-press/double-tap are implemented with
-  SwiftUI's built-in `onTapGesture(count:)` disambiguation plus
-  `onLongPressGesture`. This is the standard approach, but exact timing feel
-  is worth testing on a real device — adjust `minimumDuration` in
-  `CounterButtonRow.swift` / `WatchCounterButtonRow.swift` if long-press
-  feels too eager or too slow.
-
+- **Gesture tuning**: tap/double-tap/triple-tap are implemented with
+  SwiftUI's built-in `onTapGesture(count:)` disambiguation.

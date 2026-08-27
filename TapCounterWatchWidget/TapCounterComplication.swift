@@ -47,17 +47,23 @@ struct TapCounterComplicationView: View {
                     .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
             }
-            .widgetAccentable()
         default:
             // .accessoryCircular (the "small" complication)
             AppIconImage()
-                .widgetAccentable()
         }
     }
 }
 
 /// The app icon, clipped to whatever shape the current complication slot uses
 /// (circle for accessoryCircular, rounded rect for accessoryRectangular).
+///
+/// Do NOT add `.widgetAccentable()` here (or to any parent of this view).
+/// That modifier tells WidgetKit to discard the image's real colors and
+/// render it as a flat, system-tinted silhouette instead — that's what was
+/// producing a plain grey circle on the watch face. Leaving it off lets the
+/// full-color icon show normally; the system still automatically falls back
+/// to a monochrome rendering on its own in contexts that require it (e.g.
+/// Always On Display), without any help needed here.
 private struct AppIconImage: View {
     var body: some View {
         Image("ComplicationIcon")

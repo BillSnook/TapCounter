@@ -18,7 +18,7 @@ struct WatchCounterButtonRow: View {
         VStack(spacing: 2) {
             Text(item.name)
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary)
                 .lineLimit(1)
 
             Text("\(item.count)")
@@ -30,6 +30,7 @@ struct WatchCounterButtonRow: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
+        .padding(.horizontal, 4)
         .contentShape(Rectangle())
         .onTapGesture(count: 1) {
             store.increment(id: item.id)

@@ -7,6 +7,13 @@ options:
   createIntermediateGroups: true
   developmentLanguage: en
 
+# Loose files shown at the root of the project navigator so they're easy to
+# open/edit from within Xcode. They aren't attached to any target/build
+# phase -- fileGroups just makes XcodeGen add them to the project browser.
+fileGroups:
+  - README.md
+  - project.yml
+
 settings:
   base:
     SWIFT_VERSION: "5.0"
@@ -38,6 +45,8 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        DEVELOPMENT_TEAM: D84KDEPN2N
+        CODE_SIGN_STYLE: Automatic
     dependencies:
       - target: TapCounterWatch
         embed: true
@@ -56,12 +65,24 @@ targets:
         CFBundleDisplayName: TapCounter
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.billsnook.TapCounter
+        # Must stay false: this app only works installed as a companion to
+        # the iOS app. Setting it true breaks WCSession's ability to
+        # recognize the watch app as this iPhone app's counterpart
+        # ("WCSession counterpart app not installed"), even when a watch
+        # app is technically present. Pinned here so a stray toggle in
+        # Xcode's Signing & Capabilities / General pane (Deployment Info →
+        # "Supports Running Without iOS App Installation") gets reverted
+        # the next time this file is regenerated instead of silently
+        # sticking around.
+        WKRunsIndependentlyOfCompanionApp: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.billsnook.TapCounter.watchkitapp
         TARGETED_DEVICE_FAMILY: "4"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SKIP_INSTALL: false
+        DEVELOPMENT_TEAM: D84KDEPN2N
+        CODE_SIGN_STYLE: Automatic
     dependencies:
       - target: TapCounterWatchWidget
         embed: true
@@ -83,6 +104,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.billsnook.TapCounter.watchkitapp.Widget
         TARGETED_DEVICE_FAMILY: "4"
         SKIP_INSTALL: true
+        DEVELOPMENT_TEAM: D84KDEPN2N
+        CODE_SIGN_STYLE: Automatic
 
   TapCounterTests:
     type: bundle.unit-test
@@ -96,6 +119,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.billsnook.TapCounter.Tests
+        DEVELOPMENT_TEAM: D84KDEPN2N
+        CODE_SIGN_STYLE: Automatic
 
 schemes:
   TapCounter:

@@ -26,7 +26,7 @@ struct WatchContentView: View {
                 }
             }
             .padding(.horizontal, 8)
-            .navigationTitle("Counters")
+            .navigationTitle("CounterList")
         }
     }
 }

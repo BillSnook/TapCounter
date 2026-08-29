@@ -17,6 +17,7 @@ struct ButtonEditorView: View {
 
     @State private var name: String = ""
     @State private var count: Int = 0
+    @State private var resetsDaily: Bool = false
     @FocusState private var nameFieldFocused: Bool
 
     private var isEditing: Bool { item != nil }
@@ -35,12 +36,18 @@ struct ButtonEditorView: View {
                 }
 
                 Section("Starting Count") {
-                    Stepper(value: $count, in: -1_000_000...1_000_000) {
+                    Stepper(value: $count, in: 0...1_000) {
                         Text("\(count)")
                             .font(.title2.monospacedDigit())
                             .contentTransition(.numericText(value: Double(count)))
                             .animation(.snappy, value: count)
                     }
+                }
+
+                Section {
+                    Toggle("Reset Daily", isOn: $resetsDaily)
+                } footer: {
+                    Text("Shows 0 until the first tap of each day, then counts normally for the rest of that day. The count from previous days is kept for charting, but isn't shown or added to.")
                 }
             }
             .navigationTitle(isEditing ? "Edit Button" : "New Button")
@@ -58,6 +65,7 @@ struct ButtonEditorView: View {
                 if let item {
                     name = item.name
                     count = item.count
+                    resetsDaily = item.resetsDaily
                 } else {
                     nameFieldFocused = true
                 }
@@ -66,15 +74,17 @@ struct ButtonEditorView: View {
     }
 
     private func save() {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }  // TODO: Mark name field as required
 
         if var existing = item {
-            existing.name = trimmed
+//            existing.addEntry(name: trimmedName, count: count)
+            existing.name = trimmedName
             existing.count = count
+            existing.resetsDaily = resetsDaily
             store.updateButton(existing)
         } else {
-            store.addButton(name: trimmed, count: count)
+            store.addButton(name: trimmedName, count: count, resetsDaily: resetsDaily)
         }
         dismiss()
     }

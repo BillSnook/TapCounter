@@ -7,27 +7,22 @@
 
 import SwiftUI
 
+private enum Page: Hashable {
+    case charts
+    case counters
+}
+
 struct WatchContentView: View {
-    @Environment(CounterStore.self) private var store
+    @State private var selection: Page = .counters
 
     var body: some View {
-        NavigationStack {
-            List {
-                if store.buttons.isEmpty {
-                    Text("Create buttons on your iPhone to see them here.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .listRowBackground(Color.clear)
-                } else {
-                    ForEach(store.buttons) { item in
-                        WatchCounterButtonRow(item: item)
-                    }
-                }
-            }
-            .padding(.horizontal, 8)
-            .navigationTitle("CounterList")
+        TabView(selection: $selection) {
+            WatchChartsView()
+                .tag(Page.charts)
+            WatchCounterListView()
+                .tag(Page.counters)
         }
+        .tabViewStyle(.page(indexDisplayMode: .automatic))
     }
 }
 

@@ -32,13 +32,24 @@ struct CounterButtonRow: View {
 
             Spacer(minLength: 8)
 
-            Text("\(item.count)")
-                .font(.system(size: 36, weight: .bold, design: .rounded))
-                .monospacedDigit()
-                .contentTransition(.numericText(value: Double(item.count)))
-                .animation(.snappy, value: item.count)
-                .frame(minWidth: 72, alignment: .trailing)
-                .foregroundStyle(item.isZeroed ? .secondary : .primary)
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("\(item.count)")
+                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .contentTransition(.numericText(value: Double(item.count)))
+                    .animation(.snappy, value: item.count)
+                    .frame(minWidth: 72, alignment: .trailing)
+                    .foregroundStyle(item.isZeroed ? .secondary : .primary)
+                if item.resetsDaily {
+                    Text("Today")
+                        .font(.caption2)
+                        .foregroundStyle(.primary)
+                } else {
+                    Text("Total")
+                        .font(.caption2)
+                        .foregroundStyle(.primary)
+                }
+            }
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 14)
@@ -63,15 +74,12 @@ struct CounterButtonRow: View {
             bump()
         }
         .onTapGesture(count: 3) {
-//        .onLongPressGesture(minimumDuration: 0.5) {
             store.toggleZero(id: item.id)
             bump()
-//        } onPressingChanged: { pressing in
-//            isPressed = pressing
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(item.name), count \(item.count)")
-        .accessibilityHint("Tap to increment. Double tap to decrement. Triple tap to zero or restore.")
+//        .accessibilityElement(children: .combine)
+//        .accessibilityLabel("\(item.name), count \(item.count)")
+//        .accessibilityHint("Tap to increment. Double tap to decrement. Triple tap to zero or restore.")
     }
 
     private func bump() {

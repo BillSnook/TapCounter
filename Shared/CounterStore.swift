@@ -32,9 +32,9 @@ final class CounterStore {
     // MARK: - Mutations
 
     @discardableResult
-    func addButton(name: String, count: Int = 0) -> CounterButtonItem {
+    func addButton(name: String, count: Int = 0, resetsDaily: Bool = false) -> CounterButtonItem {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let item = CounterButtonItem(name: trimmed.isEmpty ? "Untitled" : trimmed, count: count)
+        let item = CounterButtonItem(name: trimmed.isEmpty ? "Untitled" : trimmed, count: count, resetsDaily: resetsDaily)
         buttons.append(item)
         persistAndSync()
         return item

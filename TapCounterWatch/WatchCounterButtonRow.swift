@@ -21,12 +21,26 @@ struct WatchCounterButtonRow: View {
                 .foregroundStyle(.primary)
                 .lineLimit(1)
 
-            Text("\(item.count)")
-                .font(.system(size: 30, weight: .bold, design: .rounded))
-                .monospacedDigit()
-                .contentTransition(.numericText(value: Double(item.count)))
-                .animation(.snappy, value: item.count)
-                .foregroundStyle(item.isZeroed ? .secondary : .primary)
+            HStack(spacing: 0) {
+                Text("Today")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.opacity(0))
+                    .frame(width: 45)
+
+                Spacer(minLength: 2)
+                Text("\(item.count)")
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .contentTransition(.numericText(value: Double(item.count)))
+                    .animation(.snappy, value: item.count)
+                    .foregroundStyle(item.isZeroed ? .secondary : .primary)
+                Spacer(minLength: 2)
+                Text(item.resetsDaily ? "Today" : "Total")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 45)
+           }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
@@ -39,9 +53,11 @@ struct WatchCounterButtonRow: View {
             store.decrement(id: item.id)
         }
         .onTapGesture(count: 3) {
-//        .onLongPressGesture(minimumDuration: 0.5) {
             store.toggleZero(id: item.id)
         }
+//        .onLongPressGesture(minimumDuration: 0.5) {   // Works but is redundant
+//            store.toggleZero(id: item.id)
+//        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(item.name), count \(item.count)")
     }

@@ -47,10 +47,10 @@ struct ButtonEditorView: View {
                 Section {
                     Toggle("Reset Daily", isOn: $resetsDaily)
                 } footer: {
-                    Text("Shows 0 until the first tap of each day, then counts normally for the rest of that day. The count from previous days is kept for charting, but isn't shown or added to.")
+                    Text("Count is 0 until the first tap of each day.")
                 }
             }
-            .navigationTitle(isEditing ? "Edit Button" : "New Button")
+            .navigationTitle(isEditing ? "Editing Button" : "Adding Button")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -62,6 +62,7 @@ struct ButtonEditorView: View {
                 }
             }
             .onAppear {
+                print("ButtonEditorView .onAppear, \(item?.name ?? "Unnamed")")
                 if let item {
                     name = item.name
                     count = item.count
@@ -78,10 +79,7 @@ struct ButtonEditorView: View {
         guard !trimmedName.isEmpty else { return }  // TODO: Mark name field as required
 
         if var existing = item {
-//            existing.addEntry(name: trimmedName, count: count)
-            existing.name = trimmedName
-            existing.count = count
-            existing.resetsDaily = resetsDaily
+            existing.update(name: trimmedName, count: count, resetsDaily: resetsDaily)
             store.updateButton(existing)
         } else {
             store.addButton(name: trimmedName, count: count, resetsDaily: resetsDaily)

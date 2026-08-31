@@ -29,9 +29,7 @@ struct CounterButtonRow: View {
                         .foregroundStyle(.secondary)
                 }
             }
-
             Spacer(minLength: 8)
-
             VStack(alignment: .trailing, spacing: 4) {
                 Text("\(item.count)")
                     .font(.system(size: 36, weight: .bold, design: .rounded))

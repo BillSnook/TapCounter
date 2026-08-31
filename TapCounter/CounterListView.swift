@@ -74,6 +74,14 @@ struct CounterListView: View {
             .sheet(item: $editingItem) { item in
                 ButtonEditorView(item: item)
             }
+            .onAppear {     // Closure should complete before any rendered frames appear
+                print("CounterListView .onAppear, cleanEvents, \(store.buttons.count) buttons")
+                store.cleanEvents()
+
+                for button in store.buttons {
+                    print("CounterListView .onAppear, after cleanEvents, \(button.name) has \(button.events.count) events")
+                }
+            }
         }
     }
 

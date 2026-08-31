@@ -25,9 +25,8 @@ struct WatchCounterButtonRow: View {
                 Text("Today")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .foregroundStyle(.opacity(0))
+                    .foregroundStyle(.opacity(0))   // Hide it, used as placeholder for now to center count
                     .frame(width: 45)
-
                 Spacer(minLength: 2)
                 Text("\(item.count)")
                     .font(.system(size: 30, weight: .bold, design: .rounded))
@@ -56,10 +55,10 @@ struct WatchCounterButtonRow: View {
             store.toggleZero(id: item.id)
         }
 //        .onLongPressGesture(minimumDuration: 0.5) {   // Works but is redundant
-//            store.toggleZero(id: item.id)
+//    Maybe trigger showing a chart for this button's data
 //        }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(item.name), count \(item.count)")
+        .accessibilityLabel("\(item.name), count is \(item.count)")
     }
 }
 

@@ -50,7 +50,7 @@ struct CounterButtonRow: View {
             }
         }
         .padding(.vertical, 12)
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 12)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(.thinMaterial)

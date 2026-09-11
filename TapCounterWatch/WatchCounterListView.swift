@@ -29,12 +29,7 @@ struct WatchCounterListView: View {
             .padding(.horizontal, 8)
             .navigationTitle("Count List")
             .onAppear {     // Closure should complete before any rendered frames appear
-                print("WatchCounterListView .onAppear, before cleanEvents, \(store.buttons.count) count")
                 store.cleanEvents()
-//                for button in store.buttons {
-//                    print("WatchCounterListView .onAppear, after cleanEvents, \(button.name) has \(button.events.count) events")
-//                }
-                print("WatchCounterListView .onAppear, after cleanEvents, \(store.buttons.count) count")
             }
         }
     }

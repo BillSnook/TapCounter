@@ -49,6 +49,21 @@ struct ButtonEditorView: View {
                 } footer: {
                     Text("Count is 0 until the first tap of each day.")
                 }
+                Section {
+                    Toggle("Reset Daily", isOn: $resetsDaily)
+                } footer: {
+                    Text("Count is 0 until the first tap of each day.")
+                }
+                Section {
+                    Toggle("Reset Daily", isOn: $resetsDaily)
+                } footer: {
+                    Text("Count is 0 until the first tap of each day.")
+                }
+                Section {
+                    Toggle("Reset Daily", isOn: $resetsDaily)
+                } footer: {
+                    Text("Count is 0 until the first tap of each day.")
+                }
             }
             .navigationTitle(isEditing ? "Editing Button" : "Adding Button")
             .navigationBarTitleDisplayMode(.inline)
@@ -62,7 +77,7 @@ struct ButtonEditorView: View {
                 }
             }
             .onAppear {
-                print("ButtonEditorView .onAppear, \(item?.name ?? "Unnamed")")
+                print("ButtonEditorView .onAppear, \(item?.name ?? "new button")")
                 if let item {
                     name = item.name
                     count = item.count

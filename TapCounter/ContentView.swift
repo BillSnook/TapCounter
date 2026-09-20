@@ -23,12 +23,6 @@ struct ContentView: View {
                 }
         }
     }
-
-    private func delete(_ item: CounterButtonItem) {
-        if let index = store.buttons.firstIndex(where: { $0.id == item.id }) {
-            store.deleteButtons(at: IndexSet(integer: index))
-        }
-    }
 }
 
 #Preview {

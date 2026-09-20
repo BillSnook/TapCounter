@@ -16,8 +16,11 @@ struct ButtonEditorView: View {
     let item: CounterButtonItem?
 
     @State private var name: String = ""
-    @State private var count: Int = 0
+    @State private var displayCount: Int = 0
     @State private var resetsDaily: Bool = false
+    @State private var allowsCountingDown: Bool = false      // If true, counting down is supported
+    @State private var allowsNegativeCounts: Bool = false // If true, counts can go below 0
+    @State private var allowsZeroingToggle: Bool = false  // If true, count resets to 0 or saved previous value
     @FocusState private var nameFieldFocused: Bool
 
     private var isEditing: Bool { item != nil }
@@ -36,11 +39,11 @@ struct ButtonEditorView: View {
                 }
 
                 Section("Starting Count") {
-                    Stepper(value: $count, in: 0...1_000) {
-                        Text("\(count)")
+                    Stepper(value: $displayCount, in: 0...1_000) {
+                        Text("\(displayCount)")
                             .font(.title2.monospacedDigit())
-                            .contentTransition(.numericText(value: Double(count)))
-                            .animation(.snappy, value: count)
+                            .contentTransition(.numericText(value: Double(displayCount)))
+                            .animation(.snappy, value: displayCount)
                     }
                 }
 
@@ -50,19 +53,19 @@ struct ButtonEditorView: View {
                     Text("Count is 0 until the first tap of each day.")
                 }
                 Section {
-                    Toggle("Reset Daily", isOn: $resetsDaily)
+                    Toggle("Allows Counting Down", isOn: $allowsCountingDown)
                 } footer: {
-                    Text("Count is 0 until the first tap of each day.")
+                    Text("Count may be decremented.")
                 }
                 Section {
-                    Toggle("Reset Daily", isOn: $resetsDaily)
+                    Toggle("Allows Negative Counts", isOn: $allowsNegativeCounts)
                 } footer: {
-                    Text("Count is 0 until the first tap of each day.")
+                    Text("Count may go below zero.")
                 }
                 Section {
-                    Toggle("Reset Daily", isOn: $resetsDaily)
+                    Toggle("Allows Toggle to zero", isOn: $allowsZeroingToggle)
                 } footer: {
-                    Text("Count is 0 until the first tap of each day.")
+                    Text("Count may be toggled between zero and last value.")
                 }
             }
             .navigationTitle(isEditing ? "Editing Button" : "Adding Button")
@@ -80,8 +83,11 @@ struct ButtonEditorView: View {
                 print("ButtonEditorView .onAppear, \(item?.name ?? "new button")")
                 if let item {
                     name = item.name
-                    count = item.count
+                    displayCount = item.displayCount
                     resetsDaily = item.resetsDaily
+                    allowsCountingDown = item.allowsCountingDown
+                    allowsNegativeCounts = item.allowsNegativeCounts
+                    allowsZeroingToggle = item.allowsZeroingToggle
                 } else {
                     nameFieldFocused = true
                 }
@@ -94,11 +100,12 @@ struct ButtonEditorView: View {
         guard !trimmedName.isEmpty else { return }  // TODO: Mark name field as required
 
         if var existing = item {
-            existing.update(name: trimmedName, count: count, resetsDaily: resetsDaily)
-            store.updateButton(existing)
+            existing.update(name: trimmedName, tapCount: existing.tapCount, displayCount: displayCount, resetsDaily: resetsDaily)
+            store.replaceButton(existing)
         } else {
-            store.addButton(name: trimmedName, count: count, resetsDaily: resetsDaily)
+            store.addButton(name: trimmedName, displayCount: displayCount, resetsDaily: resetsDaily)
         }
+        store.saveAndSync()
         dismiss()
     }
 }

@@ -24,18 +24,18 @@ struct CounterButtonRow: View {
                     .lineLimit(1)
 
                 if item.isZeroed {
-                    Label("Zeroed — triple tap to restore", systemImage: "arrow.uturn.backward")
+                    Label("Zeroed — long press to restore", systemImage: "arrow.uturn.backward")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 4) {
-                Text("\(item.count)")
+                Text("\(item.displayCount)")
                     .font(.system(size: 36, weight: .bold, design: .rounded))
                     .monospacedDigit()
-                    .contentTransition(.numericText(value: Double(item.count)))
-                    .animation(.snappy, value: item.count)
+                    .contentTransition(.numericText(value: Double(item.displayCount)))
+                    .animation(.snappy, value: item.displayCount)
                     .frame(minWidth: 72, alignment: .trailing)
                     .foregroundStyle(item.isZeroed ? .secondary : .primary)
                 if item.resetsDaily {
@@ -67,17 +67,16 @@ struct CounterButtonRow: View {
             store.increment(id: item.id)
             bump()
         }
-        .onTapGesture(count: 2) {
+        .onTapGesture(count: 3) {   // Two taps causes too-rapid taps to be a decrement instead of two increments
             store.decrement(id: item.id)
             bump()
         }
-        .onTapGesture(count: 3) {
+        .onLongPressGesture(minimumDuration: 0.5) {
             store.toggleZero(id: item.id)
-            bump()
         }
-//        .accessibilityElement(children: .combine)
-//        .accessibilityLabel("\(item.name), count \(item.count)")
-//        .accessibilityHint("Tap to increment. Double tap to decrement. Triple tap to zero or restore.")
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(item.name), count \(item.displayCount)")
+        .accessibilityHint("Tap to increment. Triple tap to decrement. Long press to zero or restore.")
     }
 
     private func bump() {
@@ -90,8 +89,8 @@ struct CounterButtonRow: View {
 
 #Preview {
     List {
-        CounterButtonRow(item: CounterButtonItem(name: "Pushups", count: 12))
-        CounterButtonRow(item: CounterButtonItem(name: "Laps", count: 0))
+        CounterButtonRow(item: CounterButtonItem(name: "Pushups", displayCount: 12))
+        CounterButtonRow(item: CounterButtonItem(name: "Laps", displayCount: 0))
     }
     .environment(CounterStore())
 }

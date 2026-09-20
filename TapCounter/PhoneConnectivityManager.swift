@@ -32,15 +32,19 @@ final class PhoneConnectivityManager: NSObject, WCSessionDelegate {
 
     private func send(_ buttons: [CounterButtonItem]) {
         guard WCSession.isSupported(), WCSession.default.activationState == .activated else { return }
-        guard let data = try? JSONEncoder().encode(buttons) else { return }
+        guard let data = try? JSONEncoder().encode(buttons) else {
+            print("Send, unable to encode buttons, buttons \(buttons.isEmpty ? "is" : "is not") empty")
+            return
+        }
         try? WCSession.default.updateApplicationContext(["buttons": data])
     }
 
-    // MARK: - WCSessionDelegate
+   // MARK: - WCSessionDelegate
 
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         // Push current state to the watch as soon as the session is ready,
         // so a newly installed watch app has something to show right away.
+        print("Session activated, sending store.buttons to remote, it \(store.buttons.isEmpty ? "is" : "is not") empty")
         send(store.buttons)
     }
 
@@ -52,10 +56,10 @@ final class PhoneConnectivityManager: NSObject, WCSessionDelegate {
     }
 
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
-        guard let data = applicationContext["buttons"] as? Data,
-              let decoded = try? JSONDecoder().decode([CounterButtonItem].self, from: data) else { return }
-        DispatchQueue.main.async { [weak self] in
-            self?.store.applyRemoteUpdate(decoded)
+        if let data = applicationContext["buttons"] as? Data, let decoded = try? JSONDecoder().decode([CounterButtonItem].self, from: data) {
+            DispatchQueue.main.async { [weak self] in
+                self?.store.applyUpdatedButtons(decoded)
+            }
         }
     }
 }

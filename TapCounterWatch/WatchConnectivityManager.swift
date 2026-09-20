@@ -43,7 +43,7 @@ final class WatchConnectivityManager: NSObject, WCSessionDelegate {
         guard let data = applicationContext["buttons"] as? Data,
               let decoded = try? JSONDecoder().decode([CounterButtonItem].self, from: data) else { return }
         DispatchQueue.main.async { [weak self] in
-            self?.store.applyRemoteUpdate(decoded)
+            self?.store.applyUpdatedButtons(decoded)
         }
     }
 }

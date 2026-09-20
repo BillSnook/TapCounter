@@ -46,11 +46,13 @@ struct CounterListView: View {
                                 }
                         }
                         .onMove { source, destination in
-                            store.moveButtons(from: source, to: destination)
+                            if editingItem == nil {
+                                store.moveButtons(from: source, to: destination)
+                            }
                         }
                         .frame(maxWidth: 340)
                     } footer: {
-                        Text("Tap to count up. Double tap to count down. Triple tap to zero out/restore. Swipe right to edit. Swipe left to delete.")
+                        Text("Tap to count up. Triple tap to count down. Long press to zero out/restore. Swipe right to edit. Swipe left to delete.")
                     }
                 }
             }
@@ -78,12 +80,11 @@ struct CounterListView: View {
             .onAppear {     // This closure should complete before any rendered frames appear
                 print("CounterListView .onAppear, \(store.buttons.count) buttons")
                 store.cleanEvents()
-
 //                for button in store.buttons {
 //                    print("CounterListView .onAppear, after store.cleanEvents, \(button.name) has \(button.events.count) events, count of \(button.count)")
 //                }
             }
-        }
+       }
     }
 
     private func delete(_ item: CounterButtonItem) {

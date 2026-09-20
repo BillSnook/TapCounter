@@ -28,11 +28,11 @@ struct WatchCounterButtonRow: View {
                     .foregroundStyle(.opacity(0))   // Hide it, used as placeholder for now to center count
                     .frame(width: 45)
                 Spacer(minLength: 2)
-                Text("\(item.count)")
+                Text("\(item.displayCount)")
                     .font(.system(size: 30, weight: .bold, design: .rounded))
                     .monospacedDigit()
-                    .contentTransition(.numericText(value: Double(item.count)))
-                    .animation(.snappy, value: item.count)
+                    .contentTransition(.numericText(value: Double(item.displayCount)))
+                    .animation(.snappy, value: item.displayCount)
                     .foregroundStyle(item.isZeroed ? .secondary : .primary)
                 Spacer(minLength: 2)
                 Text(item.resetsDaily ? "Today" : "Total")
@@ -48,23 +48,20 @@ struct WatchCounterButtonRow: View {
         .onTapGesture(count: 1) {
             store.increment(id: item.id)
         }
-        .onTapGesture(count: 2) {
+        .onTapGesture(count: 3) {   // Two taps causes too-rapid taps to be a decrement instead of two increments
             store.decrement(id: item.id)
         }
-        .onTapGesture(count: 3) {
+        .onLongPressGesture(minimumDuration: 0.5) {
             store.toggleZero(id: item.id)
         }
-//        .onLongPressGesture(minimumDuration: 0.5) {   // Works but is redundant
-//    Maybe trigger showing a chart for this button's data
-//        }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(item.name), count is \(item.count)")
+        .accessibilityLabel("\(item.name), count is \(item.displayCount)")
     }
 }
 
 #Preview {
     List {
-        WatchCounterButtonRow(item: CounterButtonItem(name: "Pushups", count: 12))
+        WatchCounterButtonRow(item: CounterButtonItem(name: "Pushups", displayCount: 12))
     }
     .environment(CounterStore())
 }

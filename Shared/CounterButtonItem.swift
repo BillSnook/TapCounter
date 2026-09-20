@@ -2,8 +2,8 @@
 //  CounterButtonItem.swift
 //  TapCounter (Shared)
 //
-//  A single user-created counter button: a name plus a count, with
-//  support for the "double tap to zero / restore" alternating behavior.
+//  A single user-created counter button: a name plus a count and timestamp, with
+//  support for the "long press tap to zero / restore" alternating behavior.
 //
 
 import Foundation
@@ -11,24 +11,26 @@ import Foundation
 struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
     private(set) var id: UUID
     private(set) var name: String
-    private(set) var count: Int
+    private(set) var tapCount: Int
+    private(set) var displayCount: Int
 
     private(set) var savedValue: Int = 0    // The value that was the count before the last "zero" toggle,
     private(set) var isZeroed: Bool = false // True while the button is showing a zeroed-out value.
-    private(set) var lastEventDate: Date = Date()   // When the count was last changed (increment/decrement/zero-toggle).
+    private(set) var lastEventDate: Date = Date()   // When the count was last changed (inc/dec/zero-toggle).
 
     private(set) var events: [TapEvent] = []
 
-    private(set) var resetsDaily: Bool = false          // If true, this button's count starts over at 0 each new day
-    private(set) var allowsCountDown: Bool = false      // If true, counting down is supported
+    private(set) var resetsDaily: Bool = false          // If true, this button's count starts over at 0 each day
+    private(set) var allowsCountingDown: Bool = true    // If true, counting down is supported
     private(set) var allowsNegativeCounts: Bool = false // If true, counts can go below 0
-    private(set) var allowsZeroingToggle: Bool = false  // If true, count resets to 0 or saved previous value
+    private(set) var allowsZeroingToggle: Bool = true   // If true, count resets to 0 or saved previous value
 
 
-    init(id: UUID = UUID(), name: String, count: Int = 0, resetsDaily: Bool = false) {
+    init(id: UUID = UUID(), name: String, tapCount: Int = 0, displayCount: Int = 0, resetsDaily: Bool = false) {
         self.id = id
         self.name = name
-        self.count = count
+        self.tapCount = tapCount
+        self.displayCount = displayCount
         self.resetsDaily = resetsDaily
     }
 
@@ -53,7 +55,7 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
 
         // Ensure new day starts at zero count
 //        let testDate = calendar.date(byAdding: .minute, value: -2, to: now) ?? now    // Debug test
-        if resetsDaily, lastEventDate < midnight {      // If last tap was before midnight, this is the first tap of day
+        if resetsDaily, lastEventDate < midnight {      // If last tap was before midnight, this is the first tap of the day
             append(0)
             gotClean = true
 ///            print("CounterButtonItem cleanedUp \(name) with reset count to \(events.count) tap events now")
@@ -61,53 +63,64 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
         return gotClean
     }
 
-    mutating func updateEvents(_ updatedEvents: [TapEvent]) {
+    mutating func updateButton(_ updatedEvents: [TapEvent], _ displayCount: Int, _ timestamp: Date) {
         self.events = updatedEvents
+        self.displayCount = displayCount
+        self.lastEventDate = timestamp
     }
 
+//    mutating func updateEvents(_ updatedEvents: [TapEvent]) {
+//        self.events = updatedEvents
+//    }
+
     // After editing
-    mutating func update(name: String, count: Int, resetsDaily: Bool) {
+    mutating func update(name: String, tapCount: Int, displayCount: Int, resetsDaily: Bool) {
         self.name = name
-        self.count = count
+        self.tapCount = tapCount
+        self.displayCount = displayCount
         self.resetsDaily = resetsDaily
     }
 
-    mutating func append(_ count: Int) {
-        self.count = count                // Needed for display/updates
-        let event = TapEvent(count: count)
+    mutating func append(_ eventCount: Int) {
+        tapCount = eventCount
+        let event = TapEvent(tapCount: tapCount, displayCount: displayCount)
         self.lastEventDate = event.timestamp
         events.append(event)
     }
 
     /// Single tap: increments the count.
     mutating func increment() {
-        if 0 == count {
+        if 0 == displayCount {
             isZeroed = false
         }
-        count += 1
-        append(count)
+        displayCount += 1
+        append(1)
     }
 
-    /// Double tap: decrements the count.
+    /// Triple tap: decrements the count.
     mutating func decrement() {
-        if count > 0 {
-            count -= 1
-            append(count)
+        if allowsCountingDown && (allowsNegativeCounts || displayCount > 0) {
+            displayCount -= 1
+            append(-1)
         }
     }
 
-    /// Triple tap: alternates between zeroing the current value and
+    /// Long press: alternates between zeroing the current value and
     /// restoring the value that was showing before it was zeroed.
     mutating func toggleZero() {
+        guard allowsZeroingToggle else { return }
         if isZeroed {
-            count = savedValue
+            displayCount = savedValue
+            tapCount = 0
             isZeroed = false
+            append(savedValue)
         } else {
-            savedValue = count
-            count = 0
+            savedValue = displayCount
+            tapCount = savedValue
+            displayCount = 0
             isZeroed = true
+            append(-savedValue)
         }
-        append(count)
     }
 }
 

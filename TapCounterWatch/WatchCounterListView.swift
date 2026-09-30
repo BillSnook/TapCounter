@@ -28,9 +28,9 @@ struct WatchCounterListView: View {
             }
             .padding(.horizontal, 8)
             .navigationTitle("Count List")
-            .onAppear {     // Closure should complete before any rendered frames appear
-                store.cleanEvents()
-            }
+//            .onAppear {     // Closure should complete before any rendered frames appear
+//                store.cleanEvents()
+//            }
         }
     }
 }

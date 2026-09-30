@@ -7,7 +7,7 @@ import SwiftUI
 
 @main
 struct TapCounterWatchApp: App {
-    @Environment(\.scenePhase) private var scenePhase
+//    @Environment(\.scenePhase) private var scenePhase
 
     @State private var store = CounterStore()
     @State private var connectivity: WatchConnectivityManager?
@@ -22,11 +22,11 @@ struct TapCounterWatchApp: App {
                     }
                 }
         }
-        .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active {
-                store.cleanEvents()
-            }
-        }
+//        .onChange(of: scenePhase) { _, newPhase in
+//            if newPhase == .active {
+//                store.cleanEvents()
+//            }
+//        }
     }
 }
 

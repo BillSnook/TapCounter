@@ -80,7 +80,7 @@ struct ButtonEditorView: View {
                 }
             }
             .onAppear {
-                print("ButtonEditorView .onAppear, \(item?.name ?? "new button")")
+                print("\nButtonEditorView .onAppear, \(item?.name ?? "new button")")
                 if let item {
                     name = item.name
                     displayCount = item.displayCount
@@ -101,7 +101,7 @@ struct ButtonEditorView: View {
 
         if var existing = item {
             existing.update(name: trimmedName, tapCount: existing.tapCount, displayCount: displayCount, resetsDaily: resetsDaily)
-            store.replaceButton(existing)
+            store.updateButton(existing)
         } else {
             store.addButton(name: trimmedName, displayCount: displayCount, resetsDaily: resetsDaily)
         }

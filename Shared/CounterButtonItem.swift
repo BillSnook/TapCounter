@@ -35,32 +35,37 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
     }
 
     // Return true if any were cleaned or any were reset
-    mutating func cleanedUp(_ retentionDays: Int = 7) -> Bool {
-        let calendar = Calendar.current
-        let now = Date()
-        let midnight = calendar.startOfDay(for: now)
-        guard !events.isEmpty, let cutoff = calendar.date(byAdding: .day, value: -retentionDays, to: midnight) else { return false }
+    mutating func eventsRemoved(_ retentionDays: Int = 7) -> Bool {
+        print("CounterButtonItem eventsRemoved")
+        guard !events.isEmpty, let cutoff = cutoffDate(retentionDays) else { return false }
+//        guard !events.isEmpty, let cutoff = calendar.date(byAdding: .day, value: -retentionDays, to: midnight) else { return false }
         let before = events.count
-//        print("CounterButtonItem cleanedUp for \(name) with \(before) tap events before")
+        print("CounterButtonItem eventsRemoved \(name) with \(before) tap events before")
         var buttonEvents = events
 
-        // Prune entries before retentionDays ago
+        /// Prune entries before retentionDays ago
         buttonEvents.removeAll { $0.timestamp < cutoff }
-        var gotClean = false
         if buttonEvents.count != before {
-//            print("CounterButtonItem cleanedUp for \(name) with \(buttonEvents.count) tap events")
+            print("CounterButtonItem eventsRemoved \(name) with \(buttonEvents.count) tap events now")
             events = buttonEvents
-            gotClean = true
+            return true
         }
+        return false
+    }
 
-        // Ensure new day starts at zero count
-//        let testDate = calendar.date(byAdding: .minute, value: -2, to: now) ?? now    // Debug test
-        if resetsDaily, lastEventDate < midnight {      // If last tap was before midnight, this is the first tap of the day
-            append(0)
-            gotClean = true
-///            print("CounterButtonItem cleanedUp \(name) with reset count to \(events.count) tap events now")
-        }
-        return gotClean
+    // Ensure new day starts at zero count if needed
+    mutating func dailyReset() -> Bool {
+        print("CounterButtonItem dailyReset")
+        guard resetsDaily, let cutoff = cutoffDate(0), lastEventDate < cutoff else { return false }     // If last tap was before midnight, this is the first tap of the day
+        append(0)           // Signal watch of reset
+        displayCount = 0
+        print("CounterButtonItem dailyReset \(name) with reset count to \(events.count) tap events now")
+        return true
+    }
+
+    func cutoffDate(_ retentionDays: Int = 7) -> Date? {
+        let calendar = Calendar.current
+        return calendar.date(byAdding: .day, value: -retentionDays, to: calendar.startOfDay(for: Date()))
     }
 
     mutating func updateButton(_ updatedEvents: [TapEvent], _ displayCount: Int, _ timestamp: Date) {

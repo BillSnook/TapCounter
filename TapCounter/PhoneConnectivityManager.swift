@@ -31,9 +31,12 @@ final class PhoneConnectivityManager: NSObject, WCSessionDelegate {
     }
 
     private func send(_ buttons: [CounterButtonItem]) {
-        guard WCSession.isSupported(), WCSession.default.activationState == .activated else { return }
+        guard WCSession.isSupported(), WCSession.default.activationState == .activated else {
+            print("Send, unable to send buttons, session state is inactive")
+            return
+        }
         guard let data = try? JSONEncoder().encode(buttons) else {
-            print("Send, unable to encode buttons, buttons \(buttons.isEmpty ? "is" : "is not") empty")
+            print("Send, unable to encode buttons data, buttons \(buttons.isEmpty ? "is" : "is not") empty")
             return
         }
         try? WCSession.default.updateApplicationContext(["buttons": data])
@@ -44,8 +47,12 @@ final class PhoneConnectivityManager: NSObject, WCSessionDelegate {
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         // Push current state to the watch as soon as the session is ready,
         // so a newly installed watch app has something to show right away.
-        print("Session activated, sending store.buttons to remote, it \(store.buttons.isEmpty ? "is" : "is not") empty")
-        send(store.buttons)
+        if activationState == .activated {
+            print("Session activated, sending store.buttons with \(store.buttons.count) buttons to Watch")
+            send(store.buttons)
+        } else {
+            print("Session is \(activationState == .inactive ? "inactive" : "not activated")")
+        }
     }
 
     func sessionDidBecomeInactive(_ session: WCSession) {}

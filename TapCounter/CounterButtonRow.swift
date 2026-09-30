@@ -73,6 +73,7 @@ struct CounterButtonRow: View {
         }
         .onLongPressGesture(minimumDuration: 0.5) {
             store.toggleZero(id: item.id)
+            bump()
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(item.name), count \(item.displayCount)")

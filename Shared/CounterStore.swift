@@ -17,12 +17,13 @@ final class CounterStore {
 
     /// Set by the platform layer (PhoneConnectivityManager / WatchConnectivityManager)
     /// to push local changes out to the paired device. Not called when a
-    /// change originated from `applyUpdatedButtons`, to avoid sync loops.
-    var onLocalChange: (([CounterButtonItem]) -> Void)?
+    /// change originated from `receivedButtonsUpdate`, to avoid sync loops.
+    var onButtonChanges: (([CounterButtonItem]) -> Void)?
+    var onStatusChanges: ((RemoteStatusMessage) -> Void)?
 
     private let dateFormatter: DateFormatter
     private let fileURL: URL
-    private var isApplyingRemoteUpdate = false
+    private var isUpdatingButtons = false
 
     init(filename: String = "counters.json") {
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -34,7 +35,7 @@ final class CounterStore {
         print("CounterStore init, loaded \(buttons.count) buttons from file")
     }
 
-    // MARK: - Mutations
+    // MARK: - Events
 
     func cleanEvents() {
 //        print("CounterStore cleanEvents, \(buttons.count) buttons")
@@ -46,11 +47,11 @@ final class CounterStore {
             if button.dailyReset() {
                 cleaned = true
             }
-            if cleaned {        // If any button cleaned or reset, save to file and sync with other device
+            if cleaned {        // If any button events changed, update that button
                 updateButton(button)
-           }
+            }
         }
-        if cleaned {        // If any button cleaned or reset, save to file and sync with other device
+        if cleaned {        // If any button updated, save all to file and sync with other device
             print("CounterStore cleanEvents did clean, saveAndSync")
             saveAndSync()
         }
@@ -131,15 +132,22 @@ final class CounterStore {
 
     // MARK: - Remote sync
 
+    func receivedStatusUpdate(_ remoteStatus: RemoteStatusMessage) {
+        print("\nCounterStore receivedStatusUpdate - status code: \(remoteStatus.statusCode), message: \(remoteStatus.statusMessage)")
+#if os(iOS)
+#else
+#endif
+    }
+
     /// Called by the platform connectivity manager when the paired device
     /// sends a newer snapshot. We need to collate this record with the local copy
     /// since one or both devices may have new entries since last connected.
     /// Do not re-broadcast, unless local changes were made, since it just came from the other device.
-    func applyUpdatedButtons(_ remoteButtons: [CounterButtonItem]) {
-        print("\nCounterStore applyUpdatedButtons - got data from remote device, remoteButtons count: \(remoteButtons.count)")
+    func receivedButtonsUpdate(_ remoteButtons: [CounterButtonItem]) {
+        print("\nCounterStore receivedButtonsUpdate - remoteButtons count: \(remoteButtons.count)")
 
+        guard remoteButtons != buttons else { return }  // Skip if no changes
 #if os(iOS)         // Only align button event logs if on iPhone side, to avoid race conditions
-//        guard remoteButtons != buttons else { return }  // Skip if no changes
         collateEvents(remoteButtons)
 #else
         buttons = remoteButtons
@@ -148,8 +156,8 @@ final class CounterStore {
    }
 
     func collateEvents(_ remoteButtons: [CounterButtonItem]) {
-        if remoteButtons.isEmpty {
-            // This should be a signal that the watch has just started and needs data from us
+        guard !remoteButtons.isEmpty else {
+            // This could be a signal that the watch has just started and needs data from us
             print(" CounterStore collateEvents remote has no buttons which may signal it has just started up - or is an error")
             return
         }
@@ -158,7 +166,7 @@ final class CounterStore {
         for watchButton in remoteButtons {
             print("CounterStore collateEvents remote '\(watchButton.name)' : \(watchButton.displayCount) has \(watchButton.events.count) events")
             showEvents(watchButton)
-            if let index = matchButton(watchButton) {   // Get local index of matching button, if any
+            if let index = buttons.firstIndex(where: { $0.id == watchButton.id }) {   // Get local index of matching button, if any
 
                 var localButton = buttons[index]
                 print("CounterStore collateEvents local  '\(localButton.name)' : \(localButton.displayCount) has \(localButton.events.count) events")
@@ -203,7 +211,7 @@ final class CounterStore {
 //                        let latestTimeStamp = fullEventList.last?.timestamp ?? Date()
 //                        localButton.updateButton(fullEventList, displayCount, latestTimeStamp)
                         //
-                        buttons[index] = watchButton
+                        buttons[index] = watchButton    // TODO: fix this, get real new events list
 //                        updateWatch = true
                     }
                     print("CounterStore collateEvents for '\(localButton.name)' after merge")
@@ -214,9 +222,9 @@ final class CounterStore {
             }
         }
         if updateWatch {
-            isApplyingRemoteUpdate = true
+            isUpdatingButtons = true
             saveAndSync()   // We updated a button and need to tell the watch
-            isApplyingRemoteUpdate = false
+            isUpdatingButtons = false
         } else {
             print("CounterStore collateEvents, saveToFile")
             saveToFile()
@@ -233,9 +241,9 @@ final class CounterStore {
 
         print("CounterStore saveAndSync, saveToFile")
         saveToFile()
-//        guard !isApplyingRemoteUpdate else { return }
+//        guard !isUpdatingButtons else { return }
         showButtons("saveAndSync", false)
-        onLocalChange?(buttons)
+        onButtonChanges?(buttons)
     }
 
     private func loadFromFile() {

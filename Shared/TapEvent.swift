@@ -12,7 +12,7 @@ import Foundation
 struct TapEvent: Identifiable, Codable, Hashable {
     let id: UUID
 
-    let tapCount: Int       // The button's count after it was updated (0, -1, 1)
+    let tapCount: Int       // The button's count when it was updated (0, -1, 1)
     let displayCount: Int   // The button's value after it was updated.
     let timestamp: Date     // The time at which the button was updated.
 

@@ -29,8 +29,12 @@ struct TapCounterApp: App {
 //                for button in store.buttons {
 //                    print("TapCounterApp .onChange to active, after store.cleanEvents, \(button.name) has \(button.events.count) events, count of \(button.count)")
 //                }
+            } else if newPhase == .inactive {
+                print("**   TapCounterApp (main), .onChange to inactive")
             } else if newPhase == .background {
                 print("**   TapCounterApp (main), .onChange to background")
+            } else  {
+                print("**   TapCounterApp (main), .onChange to ?")
             }
         }
     }

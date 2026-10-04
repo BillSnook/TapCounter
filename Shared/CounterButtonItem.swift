@@ -8,19 +8,24 @@
 
 import Foundation
 
+struct RemoteStatusMessage: Codable {
+    private(set) var statusCode: Int
+    private(set) var statusMessage: String
+}
+
 struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
     private(set) var id: UUID
     private(set) var name: String
     private(set) var tapCount: Int
     private(set) var displayCount: Int
-
-    private(set) var savedValue: Int = 0    // The value that was the count before the last "zero" toggle,
-    private(set) var isZeroed: Bool = false // True while the button is showing a zeroed-out value.
     private(set) var lastEventDate: Date = Date()   // When the count was last changed (inc/dec/zero-toggle).
+
+    private(set) var savedValue: Int = 0    // The count before the last "zero" toggle,
+    private(set) var isZeroed: Bool = false // True while the button is showing a zeroed-out value.
 
     private(set) var events: [TapEvent] = []
 
-    private(set) var resetsDaily: Bool = false          // If true, this button's count starts over at 0 each day
+    private(set) var resetsDaily: Bool = false          // If true, count starts over at 0 each day
     private(set) var allowsCountingDown: Bool = true    // If true, counting down is supported
     private(set) var allowsNegativeCounts: Bool = false // If true, counts can go below 0
     private(set) var allowsZeroingToggle: Bool = true   // If true, count resets to 0 or saved previous value
@@ -59,11 +64,11 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
         guard resetsDaily, let cutoff = cutoffDate(0), lastEventDate < cutoff else { return false }     // If last tap was before midnight, this is the first tap of the day
         append(0)           // Signal watch of reset
         displayCount = 0
-        print("CounterButtonItem dailyReset \(name) with reset count to \(events.count) tap events now")
+        print("CounterButtonItem dailyReset \(name), reset tap events count now")
         return true
     }
 
-    func cutoffDate(_ retentionDays: Int = 7) -> Date? {
+    func cutoffDate(_ retentionDays: Int = 7) -> Date? {    // Return last midnight as Date
         let calendar = Calendar.current
         return calendar.date(byAdding: .day, value: -retentionDays, to: calendar.startOfDay(for: Date()))
     }
@@ -73,10 +78,6 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
         self.displayCount = displayCount
         self.lastEventDate = timestamp
     }
-
-//    mutating func updateEvents(_ updatedEvents: [TapEvent]) {
-//        self.events = updatedEvents
-//    }
 
     // After editing
     mutating func update(name: String, tapCount: Int, displayCount: Int, resetsDaily: Bool) {

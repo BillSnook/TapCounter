@@ -28,11 +28,11 @@ struct WatchCounterListView: View {
             }
             .padding(.horizontal, 8)
             .navigationTitle("Count List")
-            .onAppear {     // Closure should complete before any rendered frames appear
-                print("**   WatchCounterListView, .onAppear, \(store.buttons.count) buttons")
-//                store.cleanEvents()
-                store.onStatusChanges?(RemoteStatusMessage(statusCode: 10, statusMessage: "Test message 1"))
-            }
+//            .onAppear {     // This closure should complete before any rendered frames appear
+//                print("**   WatchCounterListView .onAppear, \(store.buttons.count) buttons - cleanDaily")
+//                store.cleanDaily()  // Check for and signal a new day for all buttons
+//                store.onStatusChanges?(RemoteStatusMessage(statusCode: 10, statusMessage: "Test message 1"))
+//            }
         }
     }
 }

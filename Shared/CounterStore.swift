@@ -11,6 +11,7 @@
 import Foundation
 import Observation
 
+
 @Observable
 final class CounterStore {
     private(set) var buttons: [CounterButtonItem] = []
@@ -21,33 +22,45 @@ final class CounterStore {
     var onButtonChanges: (([CounterButtonItem]) -> Void)?
     var onStatusChanges: ((RemoteStatusMessage) -> Void)?
 
-    private let dateFormatter: DateFormatter
     private let fileURL: URL
-    private var isUpdatingButtons = false
+    private var doNotSync = false
 
     init(filename: String = "counters.json") {
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         self.fileURL = documents.appendingPathComponent(filename)
-        dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "en_US")
-        dateFormatter.setLocalizedDateFormatFromTemplate("E HH:mm:SSSS")
+
         loadFromFile()      // Restore buttons list from last-saved file, if any
         print("CounterStore init, loaded \(buttons.count) buttons from file")
     }
 
-    // MARK: - Events
+    // MARK: - Cleanup tap event lists
+
+    func cleanDaily() {
+        print("CounterStore cleanDaily, \(buttons.count) buttons")
+        var cleaned = false
+        for var button in buttons {
+            if button.dailyReset() {
+                cleaned = true
+                updateButton(button)
+            }
+        }
+        if cleaned {        // If any button's events changed, update that button
+            print("CounterStore cleanDaily did update some buttons, saveAndSync")
+            saveAndSync()
+        }
+    }
 
     func cleanEvents() {
-//        print("CounterStore cleanEvents, \(buttons.count) buttons")
+        print("CounterStore cleanEvents, \(buttons.count) buttons")
         var cleaned = false
         for var button in buttons {
             if button.eventsRemoved() {
                 cleaned = true
             }
-            if button.dailyReset() {
-                cleaned = true
-            }
-            if cleaned {        // If any button events changed, update that button
+//            if button.dailyReset() {
+//                cleaned = true
+//            }
+            if cleaned {        // If any button's events changed, update that button
                 updateButton(button)
             }
         }
@@ -57,9 +70,9 @@ final class CounterStore {
         }
     }
 
-    func addButton(name: String, displayCount: Int = 0, resetsDaily: Bool = false)  {  // TODO: check for duplicate names
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let item = CounterButtonItem(name: trimmed.isEmpty ? "Untitled" : trimmed, displayCount: displayCount, resetsDaily: resetsDaily)
+    // MARK: - Button management
+
+    func addButton(_ item: CounterButtonItem)  {  // TODO: check for duplicate names
         buttons.append(item)
     }
 
@@ -79,6 +92,9 @@ final class CounterStore {
         print("CounterStore moveButtons, saveAndSync")
         saveAndSync()
     }
+
+    
+// MARK: - Tap management
 
     func increment(id: UUID) {
         guard let index = buttons.firstIndex(where: { $0.id == id }) else { return }
@@ -101,28 +117,30 @@ final class CounterStore {
         saveAndSync()
     }
 
+    // MARK: - Debug display methods
 /* */   /// Display select button data
     func showTapEvents(_ events: [TapEvent]) {
 //        print("    showTapEvents, \(events.count) events")
         for event in events {
-            print("      showTapEvents: \(event.tapCount) at \(dateFormatter.string(from: event.timestamp))")
+            print("      showTapEvents: \(event.tapCount) - \(event.displayCount) at \(formatDate(event.timestamp))")
         }
     }
 
-    func showEvents(_ button: CounterButtonItem, _ showEventList: Bool = true) {
-        print("    showEvents, '\(button.name)' has \(button.events.count) events and display count is \(button.displayCount)")
+    func showButtonEvents(_ button: CounterButtonItem, _ showEventList: Bool = true) {
+        print("    showButtonEvents, button '\(button.name)' has \(button.tapCount) - \(button.displayCount) (tapCount - displayCount)")
         guard showEventList else { return }
         for event in button.events {
-            print("      showEvents: \(event.tapCount) at \(dateFormatter.string(from: event.timestamp))")
+            print("      showButtonEvents: \(event.tapCount) - \(event.displayCount) at \(formatDate(event.timestamp))")
         }
     }
 
     func showButtons(_ desc: String, _ showEventList: Bool = true) {
         print("  showButtons, \(desc), \(buttons.count) buttons")
         for button in buttons {
-            showEvents(button, showEventList)
+            showButtonEvents(button, showEventList)
         }
     }
+
 /* */
 
     func matchButton(_ button: CounterButtonItem) -> Int? {
@@ -144,10 +162,12 @@ final class CounterStore {
     /// since one or both devices may have new entries since last connected.
     /// Do not re-broadcast, unless local changes were made, since it just came from the other device.
     func receivedButtonsUpdate(_ remoteButtons: [CounterButtonItem]) {
-        print("\nCounterStore receivedButtonsUpdate - remoteButtons count: \(remoteButtons.count)")
+        print("\n \(formatDate()) * CounterStore receivedButtonsUpdate - remoteButtons count: \(remoteButtons.count)")
 
-        guard remoteButtons != buttons else { return }  // Skip if no changes
+//        guard remoteButtons != buttons else { return }  // Skip if no changes
 #if os(iOS)         // Only align button event logs if on iPhone side, to avoid race conditions
+        cleanEvents()
+        cleanDaily()
         collateEvents(remoteButtons)
 #else
         buttons = remoteButtons
@@ -161,51 +181,48 @@ final class CounterStore {
             print(" CounterStore collateEvents remote has no buttons which may signal it has just started up - or is an error")
             return
         }
-        cleanEvents()
         var updateWatch = false
         for watchButton in remoteButtons {
-            print("CounterStore collateEvents remote '\(watchButton.name)' : \(watchButton.displayCount) has \(watchButton.events.count) events")
-            showEvents(watchButton)
+            print("  CounterStore collateEvents remote '\(watchButton.name)' : \(watchButton.displayCount) has \(watchButton.events.count) events")
+            showButtonEvents(watchButton)
             if let index = buttons.firstIndex(where: { $0.id == watchButton.id }) {   // Get local index of matching button, if any
 
                 var localButton = buttons[index]
-                print("CounterStore collateEvents local  '\(localButton.name)' : \(localButton.displayCount) has \(localButton.events.count) events")
-                showEvents(localButton)
+                print("  CounterStore collateEvents local  '\(localButton.name)' : \(localButton.displayCount) has \(localButton.events.count) events")
+                showButtonEvents(localButton)
 
                 let watchSet = Set(watchButton.events)
                 let localSet = Set(localButton.events)
-//                let newEventSet = watchSet.symmetricDifference(localSet)  // Events in one but not both
                 let watchOnlySet = watchSet.subtracting(localSet)           // Events in watch but not local
                 let localOnlySet = localSet.subtracting(watchSet)           // Events in local but not watch
-                let commonEventSet = watchSet.intersection(localSet)        // Events in both
 
                 if localOnlySet.isEmpty {       // Normal case - update from watch, local unchanged
                     buttons[index] = watchButton
-                    print("  Collate Events, no local changes for '\(localButton.name)', displayCount \(watchButton.displayCount)")
-                    continue
+                    print("  CounterStore collateEventss, no local changes for '\(localButton.name)', displayCount \(watchButton.displayCount)")
+//                    continue
                 } else {
                     // Merge local events with new watch events
                     if watchOnlySet.isEmpty {
                         print(" -> ERROR: CounterStore collateEvents, watchSet empty for '\(watchButton.name)'")
-                        continue
+//                        continue
                     }  else {
+                        let commonEventSet = watchSet.intersection(localSet)        // Events in both
 //                        var displayCount = localButton.displayCount
-//                        let sortedNewEventsArray = Array(newEventSet).sorted { $0.timestamp < $1.timestamp }
                         print("  Common events, local displayCount \(localButton.displayCount), watch displayCount \(watchButton.displayCount)")
                         let commonEventsArray = Array(commonEventSet).sorted { $0.timestamp < $1.timestamp }
                         showTapEvents(commonEventsArray)
-                        print("  Watch Event differences")
+                        print("  Watch-only Events")
                         let watchEventsArray = Array(watchOnlySet).sorted { $0.timestamp < $1.timestamp }
                         showTapEvents(watchEventsArray)
-                        print("  Phone Event differences")
+                        print("  Phone-only Events")
                         let phoneEventsArray = Array(localOnlySet).sorted { $0.timestamp < $1.timestamp }
                         showTapEvents(phoneEventsArray)
-                        // This is good but displayCount and lastDate are wrong
-                        // Needs better grooming so counts are accurate
-//                        var displayCount = commonEventsArray
                         print("  Local displayCount \(localButton.displayCount), watch displayCount \(watchButton.displayCount)")
+                        // This is ok but displayCount and lastDate are wrong - needs grooming so counts are accurate
+                        let newEventsSet = watchSet.symmetricDifference(localSet)  // Events in either but not both
+                        let sortedNewEventsArray = Array(newEventsSet).sorted { $0.timestamp < $1.timestamp }
 //                        for event in sortedNewEventsArray {
-//                            displayCount += event.count
+//                            displayCount += event.tapCount
 //                        }
 
 //                        let latestTimeStamp = fullEventList.last?.timestamp ?? Date()
@@ -215,16 +232,15 @@ final class CounterStore {
 //                        updateWatch = true
                     }
                     print("CounterStore collateEvents for '\(localButton.name)' after merge")
-                    showEvents(localButton)
+                    showButtonEvents(localButton)
                 }
             } else {
                 print(" -> ERROR: CounterStore collateEvents, local button for '\(watchButton.name)' is not found - deleted locally?")
             }
         }
         if updateWatch {
-            isUpdatingButtons = true
+            print("CounterStore collateEvents, saveAndSync because watch needs updating")
             saveAndSync()   // We updated a button and need to tell the watch
-            isUpdatingButtons = false
         } else {
             print("CounterStore collateEvents, saveToFile")
             saveToFile()
@@ -241,8 +257,8 @@ final class CounterStore {
 
         print("CounterStore saveAndSync, saveToFile")
         saveToFile()
-//        guard !isUpdatingButtons else { return }
-        showButtons("saveAndSync", false)
+//        guard ! else { return }
+        showButtons("saveAndSync", true)
         onButtonChanges?(buttons)
     }
 

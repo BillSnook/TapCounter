@@ -24,17 +24,17 @@ struct TapCounterApp: App {
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
-                print("**   TapCounterApp (main), .onChange to active, \(store.buttons.count) buttons")
+                print("\n \(formatDate()) * TapCounterApp (main), .onChange to active, \(store.buttons.count) buttons")
 //                store.cleanEvents()
 //                for button in store.buttons {
 //                    print("TapCounterApp .onChange to active, after store.cleanEvents, \(button.name) has \(button.events.count) events, count of \(button.count)")
 //                }
             } else if newPhase == .inactive {
-                print("**   TapCounterApp (main), .onChange to inactive")
+                print(" \(formatDate()) * TapCounterApp (main), .onChange to inactive")
             } else if newPhase == .background {
-                print("**   TapCounterApp (main), .onChange to background")
+                print(" \(formatDate()) * TapCounterApp (main), .onChange to background")
             } else  {
-                print("**   TapCounterApp (main), .onChange to ?")
+                print(" \(formatDate()) * TapCounterApp (main), .onChange to ?")
             }
         }
     }

@@ -78,7 +78,8 @@ struct CounterListView: View {
                 ButtonEditorView(item: item)
             }
             .onAppear {     // This closure should complete before any rendered frames appear
-                print("**  CounterListView .onAppear, \(store.buttons.count) buttons, cleaning up now")
+                print("**  CounterListView .onAppear, \(store.buttons.count) buttons, cleaning daily and events")
+                store.cleanDaily()  // Check for and signal a new day for all buttons
                 store.cleanEvents()
 //                for button in store.buttons {
 //                    print("CounterListView .onAppear, after store.cleanEvents, \(button.name) has \(button.events.count) events, count of \(button.count)")

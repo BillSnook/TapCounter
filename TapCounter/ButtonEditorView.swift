@@ -17,16 +17,18 @@ struct ButtonEditorView: View {
 
     @State private var name: String = ""
     @State private var displayCount: Int = 0
-    @State private var resetsDaily: Bool = false
-    @State private var allowsCountingDown: Bool = false      // If true, counting down is supported
-    @State private var allowsNegativeCounts: Bool = false // If true, counts can go below 0
-    @State private var allowsZeroingToggle: Bool = false  // If true, count resets to 0 or saved previous value
+    @State private var resetsDaily: Bool = false            // If true, count resets each day (at midnight)
+    @State private var allowsCountingDown: Bool = false     // If true, counting down is supported
+    @State private var allowsNegativeCounts: Bool = false   // If true, counts can go below 0
+    @State private var allowsZeroingToggle: Bool = false    // If true, count resets to 0 or saved previous value
     @FocusState private var nameFieldFocused: Bool
 
     private var isEditing: Bool { item != nil }
 
     private var canSave: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let maybeName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !maybeName.isEmpty, !hasExistingName( maybeName ) else { return false }
+        return true
     }
 
     var body: some View {
@@ -35,6 +37,7 @@ struct ButtonEditorView: View {
                 Section("Name") {
                     TextField("e.g. Pushups, Laps, Score", text: $name)
                         .textInputAutocapitalization(.words)
+                        .disableAutocorrection( true )
                         .focused($nameFieldFocused)
                 }
 
@@ -50,7 +53,7 @@ struct ButtonEditorView: View {
                 Section {
                     Toggle("Reset Daily", isOn: $resetsDaily)
                 } footer: {
-                    Text("Count is 0 until the first tap of each day.")
+                    Text("Count is reset to 0 each day.")
                 }
                 Section {
                     Toggle("Allows Counting Down", isOn: $allowsCountingDown)
@@ -100,15 +103,22 @@ struct ButtonEditorView: View {
         guard !trimmedName.isEmpty else { return }  // TODO: Mark name field as required
 
         if var existing = item {
-            existing.update(name: trimmedName, tapCount: existing.tapCount, displayCount: displayCount, resetsDaily: resetsDaily)
+            existing.update(name: trimmedName, tapCount: existing.tapCount, displayCount: displayCount, resetsDaily: resetsDaily, allowsCountingDown: allowsCountingDown, allowsNegativeCounts: allowsNegativeCounts, allowsZeroingToggle: allowsZeroingToggle)
             store.updateButton(existing)
         } else {
-            store.addButton(name: trimmedName, displayCount: displayCount, resetsDaily: resetsDaily)
+            guard !hasExistingName(trimmedName) else { return }  // TODO: Mark name field as duplicate
+            let newButton = CounterButtonItem(name: trimmedName, displayCount: displayCount, resetsDaily: resetsDaily, allowsCountingDown: allowsCountingDown, allowsNegativeCounts: allowsNegativeCounts, allowsZeroingToggle: allowsZeroingToggle)
+            store.addButton(newButton)
         }
         store.saveAndSync()
         dismiss()
     }
+
+    func hasExistingName(_ newName: String) -> Bool {
+        return store.buttons.contains { $0.name == newName }
+    }
 }
+
 
 #Preview {
     ButtonEditorView(item: nil)

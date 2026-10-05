@@ -24,14 +24,14 @@ struct TapCounterWatchApp: App {
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
-                print("**   TapCounterwatchApp (main), .onChange to active, \(store.buttons.count) buttons")
-//                store.cleanEvents()
+                print("\n \(formatDate()) * TapCounterWatchApp (main), .onChange to active, \(store.buttons.count) buttons - cleanDaily")
+                store.cleanDaily()
             } else if newPhase == .inactive {
-                print("**   TapCounterwatchApp (main), .onChange to inactive")
+                print(" \(formatDate()) * TapCounterWatchApp (main), .onChange to inactive")
             } else if newPhase == .background {
-                print("**   TapCounterwatchApp (main), .onChange to background")
+                print(" \(formatDate()) * TapCounterWatchApp (main), .onChange to background\n")
             } else  {
-                print("**   TapCounterwatchApp (main), .onChange to ?")
+                print(" \(formatDate()) * TapCounterWatchApp (main), .onChange to ?")
             }
         }
     }

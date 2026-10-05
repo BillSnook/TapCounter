@@ -8,6 +8,14 @@
 
 import Foundation
 
+let dateFormatter = DateFormatter()
+
+func formatDate(_ thisDate: Date = Date())-> String {
+//    dateFormatter.locale = Locale(identifier: "en_US")
+    dateFormatter.setLocalizedDateFormatFromTemplate("h:mm:SS")
+    return dateFormatter.string(from: thisDate)
+}
+
 struct RemoteStatusMessage: Codable {
     private(set) var statusCode: Int
     private(set) var statusMessage: String
@@ -31,27 +39,29 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
     private(set) var allowsZeroingToggle: Bool = true   // If true, count resets to 0 or saved previous value
 
 
-    init(id: UUID = UUID(), name: String, tapCount: Int = 0, displayCount: Int = 0, resetsDaily: Bool = false) {
+    init(id: UUID = UUID(), name: String, tapCount: Int = 0, displayCount: Int = 0, resetsDaily: Bool = false, allowsCountingDown: Bool = false, allowsNegativeCounts: Bool = false, allowsZeroingToggle: Bool = false) {
         self.id = id
         self.name = name
         self.tapCount = tapCount
         self.displayCount = displayCount
         self.resetsDaily = resetsDaily
+        self.allowsCountingDown = allowsCountingDown
+        self.allowsNegativeCounts = allowsNegativeCounts
+        self.allowsZeroingToggle = allowsZeroingToggle
     }
 
-    // Return true if any were cleaned or any were reset
+// MARK: - Cleanup events
+    // Return true if any were removed due to age
     mutating func eventsRemoved(_ retentionDays: Int = 7) -> Bool {
         print("CounterButtonItem eventsRemoved")
-        guard !events.isEmpty, let cutoff = cutoffDate(retentionDays) else { return false }
-//        guard !events.isEmpty, let cutoff = calendar.date(byAdding: .day, value: -retentionDays, to: midnight) else { return false }
+        guard !events.isEmpty else { return false }
+        let cutoff = cutoffDate(retentionDays)
         let before = events.count
         print("CounterButtonItem eventsRemoved \(name) with \(before) tap events before")
         var buttonEvents = events
-
-        /// Prune entries before retentionDays ago
         buttonEvents.removeAll { $0.timestamp < cutoff }
+        print("CounterButtonItem eventsRemoved \(name) with \(before - buttonEvents.count) tap events removed")
         if buttonEvents.count != before {
-            print("CounterButtonItem eventsRemoved \(name) with \(buttonEvents.count) tap events now")
             events = buttonEvents
             return true
         }
@@ -60,31 +70,37 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
 
     // Ensure new day starts at zero count if needed
     mutating func dailyReset() -> Bool {
-        print("CounterButtonItem dailyReset")
-        guard resetsDaily, let cutoff = cutoffDate(0), lastEventDate < cutoff else { return false }     // If last tap was before midnight, this is the first tap of the day
-        append(0)           // Signal watch of reset
-        displayCount = 0
-        print("CounterButtonItem dailyReset \(name), reset tap events count now")
+        let cutoff = cutoffDate(0)  // A date at a past midnight
+                                    // If lastEventDate is before this date,
+                                    // we signal a daily reset is happening
+        print("CounterButtonItem dailyReset, cutoff is \(formatDate(cutoff)), lastEventDate is \(formatDate(lastEventDate))")
+        guard resetsDaily,
+//              let cutoff = cutoffDate(0),    // If last tap was before midnight
+              lastEventDate < cutoff
+        else { return false }
+        displayCount = 0                    // This if before the first tap of the day
+        append(0)           // Signal remote that daily reset has occurred
+        print("CounterButtonItem dailyReset '\(name)', reset tap events count now")
         return true
     }
 
-    func cutoffDate(_ retentionDays: Int = 7) -> Date? {    // Return last midnight as Date
+    func cutoffDate(_ daysAgo: Int = 7) -> Date {    // Return days ago midnight as Date
         let calendar = Calendar.current
-        return calendar.date(byAdding: .day, value: -retentionDays, to: calendar.startOfDay(for: Date()))
+        if daysAgo == 0 { // Test, to use -2 minutes as reset time to test reset behaviour
+            return calendar.date(byAdding: .minute, value: -2, to: Date()) ?? Date()
+        }
+        return calendar.date(byAdding: .day, value: -daysAgo, to: calendar.startOfDay(for: Date())) ?? Date()
     }
 
-    mutating func updateButton(_ updatedEvents: [TapEvent], _ displayCount: Int, _ timestamp: Date) {
-        self.events = updatedEvents
-        self.displayCount = displayCount
-        self.lastEventDate = timestamp
-    }
-
-    // After editing
-    mutating func update(name: String, tapCount: Int, displayCount: Int, resetsDaily: Bool) {
+//  MARK: - Button editing
+    mutating func update(name: String, tapCount: Int, displayCount: Int, resetsDaily: Bool, allowsCountingDown: Bool, allowsNegativeCounts: Bool, allowsZeroingToggle: Bool) {
         self.name = name
         self.tapCount = tapCount
         self.displayCount = displayCount
         self.resetsDaily = resetsDaily
+        self.allowsCountingDown = allowsCountingDown
+        self.allowsNegativeCounts = allowsNegativeCounts
+        self.allowsZeroingToggle = allowsZeroingToggle
     }
 
     mutating func append(_ eventCount: Int) {
@@ -94,6 +110,7 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
         events.append(event)
     }
 
+    //  MARK: - Tap responses
     /// Single tap: increments the count.
     mutating func increment() {
         if 0 == displayCount {
@@ -116,16 +133,20 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
     mutating func toggleZero() {
         guard allowsZeroingToggle else { return }
         if isZeroed {
-            displayCount = savedValue
-            tapCount = 0
+            if savedValue != 0 {
+                displayCount = savedValue
+                tapCount = 0
+                append(savedValue)
+            }
             isZeroed = false
-            append(savedValue)
         } else {
-            savedValue = displayCount
-            tapCount = savedValue
-            displayCount = 0
-            isZeroed = true
-            append(-savedValue)
+            if displayCount != 0 {
+                savedValue = displayCount
+                tapCount = savedValue
+                displayCount = 0
+                append(-savedValue)
+                isZeroed = true
+            }
         }
     }
 }

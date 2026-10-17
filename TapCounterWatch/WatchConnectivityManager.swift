@@ -52,7 +52,13 @@ final class WatchConnectivityManager: NSObject, WCSessionDelegate {
 
     // MARK: - WCSessionDelegate
 
-    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        if activationState == .activated {
+            print("Session activated at \(formatDate())")
+        } else {
+            print("Session is \(activationState == .inactive ? "inactive" : "not activated") at \(formatDate())")
+        }
+    }
 
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
         if let data = applicationContext["buttons"] as? Data {

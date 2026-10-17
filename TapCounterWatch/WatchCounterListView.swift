@@ -27,10 +27,10 @@ struct WatchCounterListView: View {
                 }
             }
             .padding(.horizontal, 8)
-            .navigationTitle("Count List")
+            .navigationTitle("Tap Counts")
 //            .onAppear {     // This closure should complete before any rendered frames appear
-//                print("**   WatchCounterListView .onAppear, \(store.buttons.count) buttons - cleanDaily")
-//                store.cleanDaily()  // Check for and signal a new day for all buttons
+//                print("**   WatchCounterListView .onAppear, \(store.buttons.count) buttons - checkDailyResets")
+//                store.checkDailyResets()  // Check for and signal a new day for all buttons
 //                store.onStatusChanges?(RemoteStatusMessage(statusCode: 10, statusMessage: "Test message 1"))
 //            }
         }

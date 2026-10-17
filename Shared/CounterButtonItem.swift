@@ -11,8 +11,14 @@ import Foundation
 let dateFormatter = DateFormatter()
 
 func formatDate(_ thisDate: Date = Date())-> String {
-//    dateFormatter.locale = Locale(identifier: "en_US")
-    dateFormatter.setLocalizedDateFormatFromTemplate("h:mm:SS")
+    dateFormatter.locale = Locale(identifier: "en_US")
+    dateFormatter.setLocalizedDateFormatFromTemplate("EEE h:mm:SS")
+    return dateFormatter.string(from: thisDate)
+}
+
+func formatMonthDate(_ thisDate: Date = Date())-> String {
+    dateFormatter.locale = Locale(identifier: "en_US")
+    dateFormatter.setLocalizedDateFormatFromTemplate("MM/dd EEE h:mm:SS")
     return dateFormatter.string(from: thisDate)
 }
 
@@ -28,15 +34,14 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
     private(set) var displayCount: Int
     private(set) var lastEventDate: Date = Date()   // When the count was last changed (inc/dec/zero-toggle).
 
-    private(set) var savedValue: Int = 0    // The count before the last "zero" toggle,
-    private(set) var isZeroed: Bool = false // True while the button is showing a zeroed-out value.
-
     private(set) var events: [TapEvent] = []
 
     private(set) var resetsDaily: Bool = false          // If true, count starts over at 0 each day
     private(set) var allowsCountingDown: Bool = true    // If true, counting down is supported
     private(set) var allowsNegativeCounts: Bool = false // If true, counts can go below 0
     private(set) var allowsZeroingToggle: Bool = true   // If true, count resets to 0 or saved previous value
+    private(set) var savedValue: Int = 0    // The count before the last "zero" toggle,
+    private(set) var isZeroed: Bool = false // True while the button is showing a zeroed-out value.
 
 
     init(id: UUID = UUID(), name: String, tapCount: Int = 0, displayCount: Int = 0, resetsDaily: Bool = false, allowsCountingDown: Bool = false, allowsNegativeCounts: Bool = false, allowsZeroingToggle: Bool = false) {
@@ -44,6 +49,7 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
         self.name = name
         self.tapCount = tapCount
         self.displayCount = displayCount
+        
         self.resetsDaily = resetsDaily
         self.allowsCountingDown = allowsCountingDown
         self.allowsNegativeCounts = allowsNegativeCounts
@@ -53,7 +59,7 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
 // MARK: - Cleanup events
     // Return true if any were removed due to age
     mutating func eventsRemoved(_ retentionDays: Int = 7) -> Bool {
-        print("CounterButtonItem eventsRemoved")
+//        print("CounterButtonItem eventsRemoved")
         guard !events.isEmpty else { return false }
         let cutoff = cutoffDate(retentionDays)
         let before = events.count
@@ -70,42 +76,46 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
 
     // Ensure new day starts at zero count if needed
     mutating func dailyReset() -> Bool {
-        let cutoff = cutoffDate(0)  // A date at a past midnight
-                                    // If lastEventDate is before this date,
-                                    // we signal a daily reset is happening
+        let cutoff = cutoffDate(0)  // A date at last midnight
+                                    // If lastEventDate is before this date, we signal a daily reset is happening
         print("CounterButtonItem dailyReset, cutoff is \(formatDate(cutoff)), lastEventDate is \(formatDate(lastEventDate))")
         guard resetsDaily,
-//              let cutoff = cutoffDate(0),    // If last tap was before midnight
               lastEventDate < cutoff
         else { return false }
-        displayCount = 0                    // This if before the first tap of the day
-        append(0)           // Signal remote that daily reset has occurred
-        print("CounterButtonItem dailyReset '\(name)', reset tap events count now")
+        displayCount = 0        // This if before the first tap of the day
+        append(0, cutoff)       // Event marks that daily reset has occurred, uses last midnight as timestamp
+        print("CounterButtonItem dailyReset reset button '\(name)' counts to 0")
         return true
     }
 
     func cutoffDate(_ daysAgo: Int = 7) -> Date {    // Return days ago midnight as Date
         let calendar = Calendar.current
-        if daysAgo == 0 { // Test, to use -2 minutes as reset time to test reset behaviour
-            return calendar.date(byAdding: .minute, value: -2, to: Date()) ?? Date()
-        }
         return calendar.date(byAdding: .day, value: -daysAgo, to: calendar.startOfDay(for: Date())) ?? Date()
     }
 
 //  MARK: - Button editing
-    mutating func update(name: String, tapCount: Int, displayCount: Int, resetsDaily: Bool, allowsCountingDown: Bool, allowsNegativeCounts: Bool, allowsZeroingToggle: Bool) {
+    mutating func update(name: String, tapCount: Int, displayCount: Int,
+                         resetsDaily: Bool, allowsCountingDown: Bool,
+                         allowsNegativeCounts: Bool, allowsZeroingToggle: Bool) {
         self.name = name
         self.tapCount = tapCount
         self.displayCount = displayCount
+
         self.resetsDaily = resetsDaily
         self.allowsCountingDown = allowsCountingDown
         self.allowsNegativeCounts = allowsNegativeCounts
         self.allowsZeroingToggle = allowsZeroingToggle
     }
 
-    mutating func append(_ eventCount: Int) {
+    mutating func replaceEvents(_ newEventList: [TapEvent], _ newDisplayCount: Int, _ newLatestDate: Date) {
+        self.events = newEventList
+        self.displayCount = newDisplayCount
+        self.lastEventDate = newLatestDate
+    }
+
+    mutating func append(_ eventCount: Int, _ newLastDate: Date = .now) {
         tapCount = eventCount
-        let event = TapEvent(tapCount: tapCount, displayCount: displayCount)
+        let event = TapEvent(tapCount: tapCount, displayCount: displayCount, timestamp: newLastDate)
         self.lastEventDate = event.timestamp
         events.append(event)
     }
@@ -113,9 +123,7 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
     //  MARK: - Tap responses
     /// Single tap: increments the count.
     mutating func increment() {
-        if 0 == displayCount {
-            isZeroed = false
-        }
+        isZeroed = false    // This cancels any toggle
         displayCount += 1
         append(1)
     }
@@ -150,4 +158,3 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
         }
     }
 }
-

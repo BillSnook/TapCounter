@@ -45,14 +45,9 @@ struct CounterListView: View {
                                     .tint(.blue)
                                 }
                         }
-                        .onMove { source, destination in
-                            if editingItem == nil {
-                                store.moveButtons(from: source, to: destination)
-                            }
-                        }
-                        .frame(maxWidth: 340)
+                       .frame(maxWidth: 340)
                     } footer: {
-                        Text("Tap to count up. Triple tap to count down. Long press to zero out/restore. Swipe right to edit. Swipe left to delete.")
+                        Text("Tap to count up. Triple tap to count down, if enabled. Swipe right to edit. Swipe left to delete.")
                     }
                 }
             }
@@ -77,14 +72,14 @@ struct CounterListView: View {
             .sheet(item: $editingItem) { item in
                 ButtonEditorView(item: item)
             }
-            .onAppear {     // This closure should complete before any rendered frames appear
-                print("**  CounterListView .onAppear, \(store.buttons.count) buttons, cleaning daily and events")
-                store.cleanDaily()  // Check for and signal a new day for all buttons
-                store.cleanEvents()
-//                for button in store.buttons {
-//                    print("CounterListView .onAppear, after store.cleanEvents, \(button.name) has \(button.events.count) events, count of \(button.count)")
-//                }
-            }
+//            .onAppear {     // This closure should complete before any rendered frames appear
+//                print("**  CounterListView .onAppear, \(store.buttons.count) buttons, cleaning daily and events")
+//                store.checkDailyResets()  // Check for and signal a new day for all buttons
+//                store.clearExpiredEvents()
+////                for button in store.buttons {
+////                    print("CounterListView .onAppear, after store.clearExpiredEvents, \(button.name) has \(button.events.count) events, count of \(button.count)")
+////                }
+//            }
        }
     }
 

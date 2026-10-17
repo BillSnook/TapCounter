@@ -27,8 +27,8 @@ struct ButtonEditorView: View {
 
     private var canSave: Bool {
         let maybeName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !maybeName.isEmpty, !hasExistingName( maybeName ) else { return false }
-        return true
+        guard !maybeName.isEmpty else { return false }
+        return !hasExistingName( maybeName ) || item == nil
     }
 
     var body: some View {

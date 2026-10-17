@@ -11,11 +11,13 @@ struct TapCounterApp: App {
 
     @State private var store = CounterStore()
     @State private var connectivity: PhoneConnectivityManager?
+    @StateObject var orientationManager = OrientationManager()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
             .environment(store)
+            .environmentObject(orientationManager)
             .onAppear {
                 if connectivity == nil {
                     connectivity = PhoneConnectivityManager(store: store)
@@ -25,10 +27,7 @@ struct TapCounterApp: App {
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 print("\n \(formatDate()) * TapCounterApp (main), .onChange to active, \(store.buttons.count) buttons")
-//                store.cleanEvents()
-//                for button in store.buttons {
-//                    print("TapCounterApp .onChange to active, after store.cleanEvents, \(button.name) has \(button.events.count) events, count of \(button.count)")
-//                }
+                store.checkDailyResets()
             } else if newPhase == .inactive {
                 print(" \(formatDate()) * TapCounterApp (main), .onChange to inactive")
             } else if newPhase == .background {

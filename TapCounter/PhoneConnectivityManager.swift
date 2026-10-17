@@ -63,10 +63,10 @@ final class PhoneConnectivityManager: NSObject, WCSessionDelegate {
         // Push current state to the watch as soon as the session is ready,
         // so a newly installed watch app has something to show right away.
         if activationState == .activated {
-            print("Session activated, sending store.buttons with \(store.buttons.count) buttons to Watch")
+            print("Session activated, sending \(store.buttons.count) store.buttons to Watch at \(formatDate())")
             send(store.buttons)
         } else {
-            print("Session is \(activationState == .inactive ? "inactive" : "not activated")")
+            print("Session is \(activationState == .inactive ? "inactive" : "not activated") at \(formatDate())")
         }
     }
 

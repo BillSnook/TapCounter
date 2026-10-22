@@ -30,7 +30,7 @@ final class CounterStore {
         self.fileURL = documents.appendingPathComponent(filename)
 
         loadFromFile()      // Restore buttons list from last-saved file, if any
-        print("CounterStore init, loaded \(buttons.count) buttons from file, v1.6")
+        print("CounterStore init, loaded \(buttons.count) buttons from file, v2.0")
     }
 
     // MARK: - Button management
@@ -89,18 +89,18 @@ final class CounterStore {
         }
     }
 
-    func showButtonEvents(_ button: CounterButtonItem, _ showEventList: Bool = true) {
+    func showButtonEvents(_ button: CounterButtonItem, _ showEventListToo: Bool = true) {
         print("    showButtonEvents, button '\(button.name)' has \(button.tapCount) - \(button.displayCount) (tapCount - displayCount)")
-        guard showEventList else { return }
+        guard showEventListToo else { return }
         for event in button.events {
             print("      showButtonEvents: \(event.tapCount) - \(event.displayCount) at \(formatDate(event.timestamp))")
         }
     }
 
-    func showButtons(_ desc: String, _ showEventList: Bool = true) {
-        print("  showButtons, \(desc), \(buttons.count) buttons")
+    func showButtons(_ desc: String = "", showEventListToo: Bool = true) {
+        print("  showButtons, \(desc.isEmpty ? "" : "\(desc), ")\(buttons.count) buttons")
         for button in buttons {
-            showButtonEvents(button, showEventList)
+            showButtonEvents(button, showEventListToo)
         }
     }
 
@@ -128,22 +128,13 @@ final class CounterStore {
         print("\n \(formatDate()) * CounterStore receivedButtonsUpdate - remoteButtons count: \(remoteButtons.count)")
 
         guard remoteButtons != buttons else { return }  // Skip if no changes
-#if os(iOS)         // Only align button event logs if on iPhone side, to avoid race conditions
+//#if os(iOS)         // Only align button event logs if on iPhone side, to avoid race conditions
+//        collateEvents(remoteButtons)
+
+//#else
         buttons = remoteButtons
-        //        collateEvents(remoteButtons)
-        if clearExpiredEvents() || checkDailyResets() {
-            showButtons("receivedButtonsUpdate, iOS: change occurred so we updated, saved, and synced events", true)
-        } else {
-            saveToFile()
-        }
-#else
-        buttons = remoteButtons
-        if checkDailyResets() {
-            showButtons("receivedButtonsUpdate, WatchOS: change occurred so we updated, saved, and synced events", true)
-        } else {
-            saveToFile()
-        }
-#endif
+//#endif
+        checkEvents()       // Ensure we save new, checked events
    }
 
     func collateEvents(_ remoteButtons: [CounterButtonItem]) {
@@ -263,8 +254,8 @@ final class CounterStore {
 
     // MARK: - Cleanup tap event lists
 
-    @discardableResult func checkDailyResets() -> Bool {     // If reset total daily flag is set for any button, append special tap event
-        print("CounterStore checkDailyResets, \(buttons.count) buttons")
+    @discardableResult func checkDailyResets(syncIfSet: Bool = true) -> Bool {     // If reset-total daily flag is set for any button, append special tap event
+        print(" CounterStore checkDailyResets, \(buttons.count) buttons")
         var didReset = false
         for var button in buttons {
             if button.dailyReset() {
@@ -272,28 +263,44 @@ final class CounterStore {
                 updateButton(button)
             }
         }
-        if didReset {        // If any button's reset occurred, update remote
-            print("CounterStore checkDailyResets did update some buttons, saveAndSync")
+        if syncIfSet && didReset {  // If allowed and any button's reset occurred, update remote
+            print(" CounterStore checkDailyResets did update some buttons, saveAndSync")
             saveAndSync()
         }
         return didReset
     }
 
-    @discardableResult func clearExpiredEvents() -> Bool {
-        print("CounterStore clearExpiredEvents, \(buttons.count) buttons")
+    @discardableResult func clearExpiredEvents(syncIfSet: Bool = false) -> Bool {
+        print(" CounterStore clearExpiredEvents, \(buttons.count) buttons")
         var cleaned = false
         for var button in buttons {
-            if button.eventsRemoved() {
+            if button.expiredEvents() {
                 cleaned = true
                 updateButton(button)
             }
         }
-        if cleaned {        // If any button updated, save all to file and sync with other device
-            print("CounterStore clearExpiredEvents did clean, saveAndSync")
+        if syncIfSet && cleaned {   // If allowed and any button updated, save all to file and sync with other device
+            print(" CounterStore clearExpiredEvents did clean, saveAndSync")
             saveAndSync()
         }
         return cleaned
     }
+
+    func checkEvents() {    // Called on activate, when new events come in from the remote device
+        print("CounterStore checkEvents, \(buttons.count) buttons")
+        let someReset = checkDailyResets(syncIfSet: false)
+        let someCleared = clearExpiredEvents(syncIfSet: false)
+        if someReset || someCleared {
+            print("CounterStore checkEvents, event list change occurred, save and sync events")
+            showButtons()
+            saveAndSync()
+        } else {
+            print("CounterStore checkEvents, no event list change occurred")
+            showButtons()
+            saveToFile()
+        }
+    }
+
 
     // MARK: - Persistence
 
@@ -301,7 +308,7 @@ final class CounterStore {
         print("CounterStore saveAndSync, saveToFile")
         saveToFile()
 //        guard ! else { return }
-        showButtons("saveAndSync", true)
+        showButtons("saveAndSync")
         onButtonChanges?(buttons)
     }
 

@@ -30,7 +30,7 @@ struct TapCounterWatchApp: App {
                 print("\n \(formatDate()) * TapCounterWatchApp (main), .onChange to active, \(store.buttons.count) buttons")
                 if inBackground {
                     inBackground = false
-                    store.checkDailyResets()
+                    store.checkEvents()
                 }
             } else if newPhase == .inactive {
                 print(" \(formatDate()) * TapCounterWatchApp (main), .onChange to inactive")

@@ -23,7 +23,9 @@ struct ChartsView: View {
                         .multilineTextAlignment(.center)
                         .listRowBackground(Color.clear)
                 } else {
-                    if orientationInfo.orientation.isPortrait  && orientationInfo.orientation.isValidInterfaceOrientation {
+                    if orientationInfo.orientation.isPortrait
+//                        && orientationInfo.orientation.isValidInterfaceOrientation
+                    {
                         ForEach(store.buttons) { button in
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("\(button.name)")
@@ -45,11 +47,19 @@ struct ChartsView: View {
                     }
                     Chart(store.buttons) { button in
                         ForEach(button.events) { event in
-                            PointMark(
-                                x: .value("Day", event.timestamp, unit: .minute),
-                                y: .value("Count", event.displayCount)
-                            )
-                            .foregroundStyle(.teal.gradient)
+                            if orientationInfo.orientation.isLandscape {
+                                PointMark(
+                                    x: .value("Date", event.timestamp), //, unit: .minute),
+                                    y: .value("Count", event.displayCount)
+                               )
+                                .foregroundStyle(.teal.gradient)
+                            } else {
+                                BarMark(
+                                    x: .value("Date", event.timestamp), //, unit: .minute),
+                                    y: .value("Count", event.displayCount)
+                                )
+                                .foregroundStyle(.teal.gradient)
+                            }
                         }
                     }
                     .padding(10)
@@ -59,10 +69,6 @@ struct ChartsView: View {
 //            .navigationTitle("Tap Count Charts")
         }
     }
-//    func returnReversed(_ inputArray: [TapEvent]) -> [TapEvent] {
-//        let newList = inputArray.sorted { $0.timestamp < $1.timestamp }
-//        return newList
-//    }
 }
 
 #Preview {

@@ -27,7 +27,7 @@ struct TapCounterApp: App {
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 print("\n \(formatDate()) * TapCounterApp (main), .onChange to active, \(store.buttons.count) buttons")
-                store.checkDailyResets()
+                store.checkEvents()
             } else if newPhase == .inactive {
                 print(" \(formatDate()) * TapCounterApp (main), .onChange to inactive")
             } else if newPhase == .background {

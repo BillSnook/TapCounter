@@ -72,15 +72,7 @@ struct CounterListView: View {
             .sheet(item: $editingItem) { item in
                 ButtonEditorView(item: item)
             }
-//            .onAppear {     // This closure should complete before any rendered frames appear
-//                print("**  CounterListView .onAppear, \(store.buttons.count) buttons, cleaning daily and events")
-//                store.checkDailyResets()  // Check for and signal a new day for all buttons
-//                store.clearExpiredEvents()
-////                for button in store.buttons {
-////                    print("CounterListView .onAppear, after store.clearExpiredEvents, \(button.name) has \(button.events.count) events, count of \(button.count)")
-////                }
-//            }
-       }
+        }
     }
 
     private func delete(_ item: CounterButtonItem) {

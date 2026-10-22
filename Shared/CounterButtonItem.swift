@@ -58,33 +58,31 @@ struct CounterButtonItem: Identifiable, Codable, Equatable, Hashable {
 
 // MARK: - Cleanup events
     // Return true if any were removed due to age
-    mutating func eventsRemoved(_ retentionDays: Int = 7) -> Bool {
-//        print("CounterButtonItem eventsRemoved")
+    mutating func expiredEvents(_ retentionDays: Int = 6) -> Bool {
+//        print("CounterButtonItem expiredEvents")
         guard !events.isEmpty else { return false }
         let cutoff = cutoffDate(retentionDays)
         let before = events.count
-        print("CounterButtonItem eventsRemoved \(name) with \(before) tap events before")
         var buttonEvents = events
         buttonEvents.removeAll { $0.timestamp < cutoff }
-        print("CounterButtonItem eventsRemoved \(name) with \(before - buttonEvents.count) tap events removed")
-        if buttonEvents.count != before {
-            events = buttonEvents
-            return true
-        }
-        return false
+        print("  CounterButtonItem expiredEvents, button \(name) with \(before) tap events before, \(buttonEvents.count) after")
+        guard buttonEvents.count != before else { return false }
+
+        print("  CounterButtonItem expiredEvents, button \(name) with \(before - buttonEvents.count) tap events removed")
+        events = buttonEvents
+        return true
     }
 
     // Ensure new day starts at zero count if needed
     mutating func dailyReset() -> Bool {
         let cutoff = cutoffDate(0)  // A date at last midnight
                                     // If lastEventDate is before this date, we signal a daily reset is happening
-        print("CounterButtonItem dailyReset, cutoff is \(formatDate(cutoff)), lastEventDate is \(formatDate(lastEventDate))")
-        guard resetsDaily,
-              lastEventDate < cutoff
-        else { return false }
+        print("  CounterButtonItem dailyReset, cutoff is \(formatDate(cutoff)), lastEventDate is \(formatDate(lastEventDate)), \(lastEventDate < cutoff ? "" : "not ")before cutoff")
+        guard resetsDaily, lastEventDate < cutoff else { return false }
+
         displayCount = 0        // This if before the first tap of the day
         append(0, cutoff)       // Event marks that daily reset has occurred, uses last midnight as timestamp
-        print("CounterButtonItem dailyReset reset button '\(name)' counts to 0")
+        print("  CounterButtonItem dailyReset, reset button '\(name)' tap event count to 0")
         return true
     }
 

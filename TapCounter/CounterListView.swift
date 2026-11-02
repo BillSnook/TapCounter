@@ -16,15 +16,15 @@ struct CounterListView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                if store.buttons.isEmpty {
-                    ContentUnavailableView(
-                        "No Buttons Yet",
-                        systemImage: "hand.tap",
-                        description: Text("Tap the + button to create your first counter.")
-                    )
-                    .listRowSeparator(.hidden)
-                } else {
+            if store.buttons.isEmpty {
+                ContentUnavailableView(
+                    "No Buttons Yet",
+                    systemImage: "hand.tap",
+                    description: Text("Tap the + button to create your first counter.")
+                )
+                .listRowSeparator(.hidden)
+            } else {
+                List {
                     Section {
                         ForEach(store.buttons) { item in
                             CounterButtonRow(item: item)
@@ -45,32 +45,36 @@ struct CounterListView: View {
                                     .tint(.blue)
                                 }
                         }
-                       .frame(maxWidth: 340)
+//                       .frame(maxWidth: 340)
+                        .onMove { source, destination in
+                            store.moveButtons(from: source, to: destination)
+                        }
                     } footer: {
-                        Text("Tap to count up. Triple tap to count down, if enabled. Swipe right to edit. Swipe left to delete.")
+                        Text("Tap to count up. Triple tap to count down, if enabled. Swipe right to edit. Swipe left to delete. Long press to re-order list.")
+                    }
+                    .frame(maxWidth: 400)
+                }
+                .navigationTitle("Tap Counter")
+                .toolbar {
+//                ToolbarItem(placement: .navigationBarLeading) {
+//                    if store.buttons.count > 1 {    // Only change order of (move) buttons if more than 1
+//                        EditButton()
+//                    }
+//                }
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            isPresentingNewButtonEditor = true
+                        } label: {
+                            Label("Add Button", systemImage: "plus")
+                        }
                     }
                 }
-            }
-            .navigationTitle("Tap Counter")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    if store.buttons.count > 1 {    // Only change order of (move) buttons if more than 1
-                        EditButton()
-                    }
+                .sheet(isPresented: $isPresentingNewButtonEditor) {
+                    ButtonEditorView(item: nil)
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        isPresentingNewButtonEditor = true
-                    } label: {
-                        Label("Add Button", systemImage: "plus")
-                    }
+                .sheet(item: $editingItem) { item in
+                    ButtonEditorView(item: item)
                 }
-            }
-            .sheet(isPresented: $isPresentingNewButtonEditor) {
-                ButtonEditorView(item: nil)
-            }
-            .sheet(item: $editingItem) { item in
-                ButtonEditorView(item: item)
             }
         }
     }

@@ -65,11 +65,11 @@ struct ButtonEditorView: View {
                 } footer: {
                     Text("Count may go below zero.")
                 }
-                Section {
-                    Toggle("Allows Toggle to zero", isOn: $allowsZeroingToggle)
-                } footer: {
-                    Text("Count may be toggled between zero and last value.")
-                }
+//                Section {
+//                    Toggle("Allows Toggle to zero", isOn: $allowsZeroingToggle)
+//                } footer: {
+//                    Text("Count may be toggled between zero and last value.")
+//                }
             }
             .navigationTitle(isEditing ? "Editing Button" : "Adding Button")
             .navigationBarTitleDisplayMode(.inline)

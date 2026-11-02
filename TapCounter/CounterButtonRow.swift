@@ -70,13 +70,13 @@ struct CounterButtonRow: View {
             store.decrement(id: item.id)
             bump()
         }
-        .onLongPressGesture(minimumDuration: 0.5) {
-            store.toggleZero(id: item.id)
-            bump()
-        }
+//        .onLongPressGesture(minimumDuration: 0.5) {
+//            store.toggleZero(id: item.id)
+//            bump()
+//        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(item.name), count \(item.displayCount)")
-        .accessibilityHint("Tap to increment. Triple tap to decrement. Long press to zero or restore.")
+        .accessibilityHint("Tap to increment. Triple tap to decrement.") // Long press to zero or restore.")
     }
 
     private func bump() {

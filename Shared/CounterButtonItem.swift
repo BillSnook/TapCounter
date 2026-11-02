@@ -16,12 +16,6 @@ func formatDate(_ thisDate: Date = Date())-> String {
     return dateFormatter.string(from: thisDate)
 }
 
-func formatMonthDate(_ thisDate: Date = Date())-> String {
-    dateFormatter.locale = Locale(identifier: "en_US")
-    dateFormatter.setLocalizedDateFormatFromTemplate("MM/dd EEE h:mm:SS")
-    return dateFormatter.string(from: thisDate)
-}
-
 struct RemoteStatusMessage: Codable {
     private(set) var statusCode: Int
     private(set) var statusMessage: String

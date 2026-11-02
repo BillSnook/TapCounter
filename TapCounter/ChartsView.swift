@@ -9,6 +9,18 @@
 import SwiftUI
 import Charts
 
+func formatMonthDate(_ thisDate: Date = Date())-> String {
+    dateFormatter.locale = Locale(identifier: "en_US")
+    dateFormatter.setLocalizedDateFormatFromTemplate("MM/dd EEE h:mm:SS")
+    return dateFormatter.string(from: thisDate)
+}
+
+struct dayBin {
+    let date: Date
+    let amount: Int
+}
+
+
 struct ChartsView: View {
     @Environment(CounterStore.self) private var store
     @EnvironmentObject var orientationInfo: OrientationManager
@@ -30,7 +42,7 @@ struct ChartsView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("\(button.name)")
                                     .font(.title2.monospacedDigit())
-                                //                                .alignment(.leading)
+//                                    .alignment(.leading)
                                 ForEach(button.events) { event in
                                     HStack() {
                                         Text("\(event.displayCount)")

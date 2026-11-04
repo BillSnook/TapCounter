@@ -15,10 +15,12 @@ func formatMonthDate(_ thisDate: Date = Date())-> String {
     return dateFormatter.string(from: thisDate)
 }
 
-struct dayBin {
+struct eventBin {
     let date: Date
     let amount: Int
 }
+
+var eventBins = [eventBin]()
 
 
 struct ChartsView: View {
@@ -28,7 +30,7 @@ struct ChartsView: View {
     var body: some View {
         NavigationStack {
 //            List {
-                if store.buttons.isEmpty {
+                if !setupBins(store.buttons) {
                     Text("Create buttons first to see them here.")
                         .font(.title)
                         .foregroundStyle(.foreground)
@@ -51,17 +53,17 @@ struct ChartsView: View {
                                         Text("\(formatMonthDate(event.timestamp))")
                                             .font(.headline.monospacedDigit())
                                     }
-                                    //                                .padding(.vertical, 4)
+//                                .padding(.vertical, 4)
                                 }
                             }
                             .padding(16)
                         }
                     }
-                    Chart(store.buttons) { button in
+                    Chart([store.buttons.first!]) { button in
                         ForEach(button.events) { event in
                             if orientationInfo.orientation.isLandscape {
                                 PointMark(
-                                    x: .value("Date", event.timestamp), //, unit: .minute),
+                                    x: .value("Date", event.timestamp, unit: .hour),
                                     y: .value("Count", event.displayCount)
                                )
                                 .foregroundStyle(.teal.gradient)
@@ -80,6 +82,21 @@ struct ChartsView: View {
 //            .padding(.horizontal, 8)
 //            .navigationTitle("Tap Count Charts")
         }
+
+        
+    }
+
+    private func setupBins(_ buttonList: [CounterButtonItem]) -> Bool {
+
+        guard !store.buttons.isEmpty else { return false }
+        eventBins = []
+        for button in buttonList {
+            for event in button.events {
+                let eBin = eventBin(date: event.timestamp, amount: event.displayCount)
+                eventBins.append(eBin)
+            }
+        }
+        return true
     }
 }
 

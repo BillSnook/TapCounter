@@ -29,7 +29,7 @@ struct CounterButtonRow: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            Spacer(minLength: 8)
+            Spacer(minLength: 4)
             VStack(alignment: .trailing, spacing: 4) {
                 Text("\(item.displayCount)")
                     .font(.system(size: 36, weight: .bold, design: .rounded))
@@ -49,7 +49,7 @@ struct CounterButtonRow: View {
                 }
             }
         }
-        .padding(12)
+        .padding(8)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(.thinMaterial)

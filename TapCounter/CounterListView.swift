@@ -16,65 +16,68 @@ struct CounterListView: View {
 
     var body: some View {
         NavigationStack {
-            if store.buttons.isEmpty {
-                ContentUnavailableView(
-                    "No Buttons Yet",
-                    systemImage: "hand.tap",
-                    description: Text("Tap the + button to create your first counter.")
-                )
-                .listRowSeparator(.hidden)
-            } else {
-                List {
-                    Section {
-                        ForEach(store.buttons) { item in
-                            CounterButtonRow(item: item)
-                                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-                                .swipeActions(edge: .trailing) {
-                                    Button(role: .destructive) {
-                                        delete(item)
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
+            // Toolbar and sheets live outside the if/else so the + button
+            // is available in the empty state too.
+            Group {
+                if store.buttons.isEmpty {
+                    ContentUnavailableView(
+                        "No Buttons Yet",
+                        systemImage: "hand.tap",
+                        description: Text("Tap the + button to create your first counter.")
+                    )
+                } else {
+                    List {
+                        Section {
+                            ForEach(store.buttons) { item in
+                                CounterButtonRow(item: item)
+                                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                                    .swipeActions(edge: .trailing) {
+                                        Button(role: .destructive) {
+                                            delete(item)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
                                     }
-                                }
-                                .swipeActions(edge: .leading) {
-                                    Button {
-                                        editingItem = item
-                                    } label: {
-                                        Label("Edit", systemImage: "pencil")
+                                    .swipeActions(edge: .leading) {
+                                        Button {
+                                            editingItem = item
+                                        } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
+                                        .tint(.blue)
                                     }
-                                    .tint(.blue)
-                                }
+                            }
+//                           .frame(maxWidth: 340)
+                            .onMove { source, destination in
+                                store.moveButtons(from: source, to: destination)
+                            }
+                        } footer: {
+                            Text("Tap to count up. Triple tap to count down, if enabled. Swipe right to edit. Swipe left to delete. Long press to re-order list.")
                         }
-//                       .frame(maxWidth: 340)
-                        .onMove { source, destination in
-                            store.moveButtons(from: source, to: destination)
-                        }
-                    } footer: {
-                        Text("Tap to count up. Triple tap to count down, if enabled. Swipe right to edit. Swipe left to delete. Long press to re-order list.")
+                        .frame(maxWidth: 400)
                     }
-                    .frame(maxWidth: 400)
                 }
-                .navigationTitle("Tap Counter")
-                .toolbar {
+            }
+            .navigationTitle("Tap Counter")
+            .toolbar {
 //                ToolbarItem(placement: .navigationBarLeading) {
 //                    if store.buttons.count > 1 {    // Only change order of (move) buttons if more than 1
 //                        EditButton()
 //                    }
 //                }
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button {
-                            isPresentingNewButtonEditor = true
-                        } label: {
-                            Label("Add Button", systemImage: "plus")
-                        }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        isPresentingNewButtonEditor = true
+                    } label: {
+                        Label("Add Button", systemImage: "plus")
                     }
                 }
-                .sheet(isPresented: $isPresentingNewButtonEditor) {
-                    ButtonEditorView(item: nil)
-                }
-                .sheet(item: $editingItem) { item in
-                    ButtonEditorView(item: item)
-                }
+            }
+            .sheet(isPresented: $isPresentingNewButtonEditor) {
+                ButtonEditorView(item: nil)
+            }
+            .sheet(item: $editingItem) { item in
+                ButtonEditorView(item: item)
             }
         }
     }
